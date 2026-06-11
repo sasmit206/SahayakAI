@@ -1,4 +1,4 @@
-# Sahayak AI — AI-Powered Welfare Scheme Recommendation & Decision Platform
+# Sahayak AI - AI-Powered Welfare Scheme Recommendation & Decision Platform
 
 Sahayak AI is a flagship caseworker assistant platform designed for NGO workers in India. It enables them to sit with a citizen, collect their profile through natural conversation, deterministically evaluate eligibility for over 3,400+ welfare schemes, generate structured recommendation briefings, and lead them through a finite state machine (FSM) application collection workflow.
 
