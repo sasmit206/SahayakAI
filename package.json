@@ -1,0 +1,17 @@
+{
+  "name": "sahayak-ai-root",
+  "version": "1.0.0",
+  "description": "Sahayak AI - Government Scheme Recommendation Platform",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "ingest": "npm --prefix backend run ingest",
+    "evaluate": "npm --prefix backend run evaluate"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

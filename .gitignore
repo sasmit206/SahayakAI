@@ -1,0 +1,22 @@
+# Node
+node_modules/
+
+# Python
+venv/
+.venv/
+
+# Secrets
+.env
+*.env
+
+# Chroma
+chroma_db/
+
+# Archives
+*.zip
+
+# Logs
+*.log
+
+# Mac
+.DS_Store
