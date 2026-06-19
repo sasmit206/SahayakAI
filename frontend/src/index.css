@@ -3,55 +3,84 @@
 @tailwind utilities;
 
 @layer base {
+  html, body { background: #08090c; }
   body {
-    @apply font-sans bg-slate-950 text-slate-100 antialiased overflow-x-hidden;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
-      radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.95) 0px, rgba(2, 6, 23, 1) 100%);
+    @apply font-sans text-ink-100 antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
   }
-
-  /* Custom Premium Scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tightest text-white;
+    font-feature-settings: "ss01";
   }
-  ::-webkit-scrollbar-track {
-    @apply bg-slate-900/50;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-slate-700/80 rounded-full hover:bg-indigo-500/80 transition-colors duration-200;
-  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
 }
 
 @layer components {
-  /* Glassmorphism Styles */
-  .glass-panel {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 shadow-2xl;
+  /* Surface primitives — solid, hairline borders. No backdrop-blur, no glow. */
+  .surface {
+    @apply bg-ink-900 border border-white/[0.06] rounded-2xl shadow-card;
   }
-  .glass-card {
-    @apply bg-slate-900/40 backdrop-blur-md border border-slate-800/50 rounded-2xl hover:border-slate-700/80 hover:bg-slate-900/60 transition-all duration-300;
+  .surface-muted {
+    @apply bg-ink-850 border border-white/[0.05] rounded-2xl;
   }
-  .glass-input {
-    @apply bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/80 transition-all duration-200;
+  .surface-row {
+    @apply bg-ink-850/60 border border-white/[0.05] rounded-xl;
   }
-  
+  .hairline { @apply border-white/[0.06]; }
+
   /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium text-sm
+      rounded-lg px-4 py-2.5 transition-colors duration-150
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
   .btn-primary {
-    @apply bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium rounded-xl px-5 py-3 transition-all duration-200 shadow-lg shadow-indigo-600/20 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500/50;
+    @apply btn bg-white text-ink-950 hover:bg-ink-100 active:bg-ink-200;
   }
   .btn-secondary {
-    @apply bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 font-medium rounded-xl px-5 py-3 border border-slate-700/50 transition-all duration-200 active:scale-[0.98] focus:outline-none;
+    @apply btn bg-ink-800 text-ink-100 border border-white/[0.06] hover:bg-ink-700;
   }
-  
-  /* Animations */
-  .animate-glow {
-    box-shadow: 0 0 20px 2px rgba(99, 102, 241, 0.15);
+  .btn-ghost {
+    @apply btn text-ink-200 hover:bg-white/[0.04] hover:text-white;
+  }
+
+  /* Status pills */
+  .pill {
+    @apply inline-flex items-center gap-1.5 text-[10.5px] font-medium uppercase
+      tracking-[0.08em] px-2 py-0.5 rounded-md border;
+  }
+  .pill-success { @apply pill bg-success/10 text-success border-success/20; }
+  .pill-warning { @apply pill bg-warning/10 text-warning border-warning/20; }
+  .pill-neutral { @apply pill bg-white/[0.04] text-ink-200 border-white/[0.06]; }
+  .pill-accent  { @apply pill bg-accent/10 text-accent border-accent/20; }
+
+  /* Inputs */
+  .input {
+    @apply w-full bg-ink-850 border border-white/[0.06] rounded-lg
+      px-3.5 py-2.5 text-sm text-ink-100 placeholder:text-ink-400
+      focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20
+      transition-colors;
+  }
+
+  /* Eyebrow label used on landing sections */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-ink-300;
+  }
+
+  /* Grid background for hero/sections (very subtle, no neon) */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
   }
 }
 
-/* Outlines headers styled with outfit font */
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.02em;
+/* Prose tweaks for the report view */
+.report-prose {
+  @apply text-sm leading-relaxed text-ink-200 whitespace-pre-wrap;
 }

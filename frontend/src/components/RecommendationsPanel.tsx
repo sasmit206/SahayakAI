@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SchemeRecommendation } from '../services/api';
-import { CheckCircle2, ChevronRight, Award, Compass, FileText, ClipboardList, AlertCircle } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Award, Compass, FileText, ClipboardList } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RecommendationsPanelProps {
   recommendations: SchemeRecommendation[];
@@ -10,143 +11,157 @@ interface RecommendationsPanelProps {
 }
 
 export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
-  recommendations,
-  report,
-  onApplyScheme,
-  isApplying,
+  recommendations, report, onApplyScheme, isApplying,
 }) => {
   const [activeTab, setActiveTab] = useState<'schemes' | 'report'>('schemes');
 
   return (
-    <div className="glass-panel rounded-2xl flex flex-col h-full overflow-hidden shadow-2xl">
-      {/* Tabs Header */}
-      <div className="flex border-b border-slate-800 bg-slate-950/20 px-6 pt-2">
-        <button
-          onClick={() => setActiveTab('schemes')}
-          className={`flex items-center gap-2 px-4 py-3.5 border-b-2 font-medium text-sm transition-all focus:outline-none ${
-            activeTab === 'schemes'
-              ? 'border-indigo-500 text-indigo-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Compass className="h-4 w-4" />
-          Eligible Schemes ({recommendations.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('report')}
-          disabled={!report}
-          className={`flex items-center gap-2 px-4 py-3.5 border-b-2 font-medium text-sm transition-all focus:outline-none ${
-            !report
-              ? 'opacity-40 cursor-not-allowed text-slate-600'
-              : activeTab === 'report'
-              ? 'border-indigo-500 text-indigo-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <FileText className="h-4 w-4" />
-          Recommendation Report
-        </button>
+    <div className="surface flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-5 pt-4">
+        <div className="flex gap-1">
+          <TabButton
+            active={activeTab === 'schemes'}
+            onClick={() => setActiveTab('schemes')}
+            icon={<Compass className="h-3.5 w-3.5" strokeWidth={1.6} />}
+            label={`Eligible schemes`}
+            badge={recommendations.length}
+          />
+          <TabButton
+            active={activeTab === 'report'}
+            onClick={() => setActiveTab('report')}
+            icon={<FileText className="h-3.5 w-3.5" strokeWidth={1.6} />}
+            label="Report"
+            disabled={!report}
+          />
+        </div>
+        <span className="pill-neutral mb-3 font-mono">Hybrid retrieval</span>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-5">
         {activeTab === 'schemes' ? (
           recommendations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-slate-900/10 rounded-2xl border border-dashed border-slate-800">
-              <ClipboardList className="h-12 w-12 text-slate-600 mb-3" />
-              <p className="text-slate-400 text-sm font-medium">No recommendations available yet.</p>
-              <p className="text-slate-500 text-xs mt-1 max-w-[280px]">
-                Complete the intake profile on the left by chatting to generate matched schemes.
-              </p>
-            </div>
+            <EmptyState />
           ) : (
-            <div className="space-y-6">
-              {recommendations.map((rec) => (
-                <div
-                  key={rec.schemeId}
-                  className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/30 flex flex-col justify-between transition-all duration-300 group"
-                >
-                  <div>
-                    {/* Header: Score and Name */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <span className="inline-flex items-center gap-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/20 mb-2">
-                          {rec.level} Scheme
-                        </span>
-                        <h3 className="text-lg font-bold text-slate-100 group-hover:text-indigo-400 transition-colors duration-200">
+            <div className="space-y-3">
+              <AnimatePresence initial={false}>
+                {recommendations.map((rec, idx) => (
+                  <motion.article
+                    key={rec.schemeId}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
+                    className="surface-muted p-5 hover:border-white/[0.1] transition-colors"
+                  >
+                    <div className="flex items-start gap-5">
+                      {/* Rank rail */}
+                      <div className="shrink-0 text-center w-12">
+                        <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">Rank</div>
+                        <div className="mt-1 font-display text-2xl font-semibold text-white">
+                          {String(idx + 1).padStart(2, '0')}
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-white/[0.06]">
+                          <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">Score</div>
+                          <div className="text-[13px] text-accent font-semibold mt-0.5">+{rec.score}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="pill-accent">{rec.level}</span>
+                          {rec.category.slice(0, 2).map((c, i) => (
+                            <span key={i} className="pill-neutral">{c}</span>
+                          ))}
+                        </div>
+                        <h3 className="mt-2 text-[16px] text-white font-semibold tracking-tight">
                           {rec.schemeName}
                         </h3>
+
+                        <div className="mt-3 flex items-start gap-2 text-[13px] text-ink-200 leading-relaxed">
+                          <Award className="h-3.5 w-3.5 mt-0.5 text-ink-400 shrink-0" strokeWidth={1.5} />
+                          <p className="line-clamp-3">{rec.benefits}</p>
+                        </div>
+
+                        {rec.reasons.length > 0 && (
+                          <div className="mt-4 space-y-1.5">
+                            <p className="text-[10.5px] uppercase tracking-[0.1em] text-ink-400 font-medium">
+                              Eligibility match
+                            </p>
+                            {rec.reasons.slice(0, 3).map((r, i) => (
+                              <div key={i} className="flex items-start gap-2 text-[12.5px] text-ink-300">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" strokeWidth={1.8} />
+                                <span>{r}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="mt-5 flex items-center justify-between">
+                          {rec.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 text-[10.5px] text-ink-400 font-mono">
+                              {rec.tags.slice(0, 3).map((t, i) => <span key={i}>#{t}</span>)}
+                            </div>
+                          )}
+                          <button
+                            onClick={() => onApplyScheme(rec.schemeId, rec.schemeName)}
+                            disabled={isApplying}
+                            className="btn-primary text-[12.5px] px-3.5 py-2"
+                          >
+                            Start application
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      
-                      {/* Eligibility score pill */}
-                      <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-1.5 text-center flex-shrink-0">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Score</p>
-                        <p className="text-base font-extrabold text-indigo-400">+{rec.score}</p>
-                      </div>
                     </div>
-
-                    {/* Category & tags */}
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {rec.category.map((cat, idx) => (
-                        <span key={idx} className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded font-medium">
-                          {cat}
-                        </span>
-                      ))}
-                      {rec.tags.slice(0, 3).map((tag, idx) => (
-                        <span key={idx} className="bg-slate-900 border border-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Benefit Preview */}
-                    <div className="mt-4 bg-slate-950/40 border border-slate-900 rounded-xl p-3.5">
-                      <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-                        <Award className="h-3.5 w-3.5 text-indigo-400" />
-                        Key Benefits
-                      </h4>
-                      <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
-                        {rec.benefits}
-                      </p>
-                    </div>
-
-                    {/* Rationale Reasons */}
-                    <div className="mt-4 space-y-1.5">
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Eligibility Match Details
-                      </h4>
-                      {rec.reasons.slice(0, 3).map((r, idx) => (
-                        <p key={idx} className="text-xs text-slate-400 flex items-start gap-1.5">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500/80 mt-0.5 flex-shrink-0" />
-                          <span>{r}</span>
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Apply Action */}
-                  <div className="mt-5 border-t border-slate-800/80 pt-4 flex justify-end">
-                    <button
-                      onClick={() => onApplyScheme(rec.schemeId, rec.schemeName)}
-                      disabled={isApplying}
-                      className="btn-primary flex items-center gap-1.5 text-xs py-2.5 px-4 font-bold shadow-indigo-600/10 hover:shadow-indigo-600/20"
-                    >
-                      Start Application
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  </motion.article>
+                ))}
+              </AnimatePresence>
             </div>
           )
         ) : (
-          /* Markdown Recommendation Report */
-          <div className="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed whitespace-pre-wrap p-2 bg-slate-950/20 border border-slate-900 rounded-2xl p-6 overflow-x-auto">
-            {report}
-          </div>
+          <div className="surface-muted p-6 report-prose">{report}</div>
         )}
       </div>
     </div>
   );
 };
+
+function TabButton({ active, onClick, icon, label, badge, disabled }: {
+  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; badge?: number; disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`relative flex items-center gap-2 px-3 py-2.5 -mb-px text-[13px] font-medium transition-colors ${
+        disabled ? 'opacity-40 cursor-not-allowed text-ink-500'
+        : active ? 'text-white' : 'text-ink-300 hover:text-white'
+      }`}
+    >
+      {icon}
+      {label}
+      {typeof badge === 'number' && (
+        <span className="font-mono text-[11px] text-ink-400">({badge})</span>
+      )}
+      {active && (
+        <motion.span
+          layoutId="rec-tab-underline"
+          className="absolute -bottom-px left-0 right-0 h-px bg-white"
+        />
+      )}
+    </button>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center p-10 surface-muted border-dashed">
+      <ClipboardList className="h-7 w-7 text-ink-500 mb-3" strokeWidth={1.5} />
+      <p className="text-[14px] text-white font-medium">No recommendations yet</p>
+      <p className="mt-1.5 text-[12.5px] text-ink-400 max-w-xs leading-relaxed">
+        Complete the citizen intake on the left. Sahayak will surface eligible schemes here as the profile fills in.
+      </p>
+    </div>
+  );
+}
+
 export default RecommendationsPanel;

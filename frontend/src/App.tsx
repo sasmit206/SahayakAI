@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { sahayakApi, CitizenProfile, ChatMessage, SchemeRecommendation, FormField } from './services/api';
 import { ProfilePanel } from './components/ProfilePanel';
 import { ChatPanel } from './components/ChatPanel';
 import { RecommendationsPanel } from './components/RecommendationsPanel';
 import { ApplicationFlowPanel } from './components/ApplicationFlowPanel';
-import { ShieldAlert, BookOpen, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { ShieldAlert, Loader2, RefreshCw, ArrowLeft, Database, ShieldCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [sessionId, setSessionId] = useState<string>('');
   const [profile, setProfile] = useState<CitizenProfile>({
-    name: null,
-    age: null,
-    gender: null,
-    state: null,
-    income: null,
-    occupation: null,
-    maritalStatus: null,
-    category: null,
-    disabilityStatus: null,
+    name: null, age: null, gender: null, state: null, income: null,
+    occupation: null, maritalStatus: null, category: null, disabilityStatus: null,
   });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeMode, setActiveMode] = useState<'chat' | 'apply' | 'completed'>('chat');
@@ -25,8 +19,7 @@ export const App: React.FC = () => {
   const [recommendations, setRecommendations] = useState<SchemeRecommendation[]>([]);
   const [report, setReport] = useState<string | null>(null);
 
-  // Application workflow specific state
-  const [selectedSchemeId, setSelectedSchemeId] = useState<string | null>(null);
+  const [, setSelectedSchemeId] = useState<string | null>(null);
   const [selectedSchemeName, setSelectedSchemeName] = useState<string | null>(null);
   const [nextQuestion, setNextQuestion] = useState<FormField | null>(null);
   const [applicationAnswers, setApplicationAnswers] = useState<Record<string, any>>({});
@@ -54,22 +47,12 @@ export const App: React.FC = () => {
     }
   };
 
-  // Initialize intake session on mount
-  useEffect(() => {
-    initialize();
-  }, []);
+  useEffect(() => { initialize(); }, []);
 
   const handleSendMessage = async (msg: string) => {
     setIsLoading(true);
-    // Optimistic Update: Add user's message immediately
-    const userMsg: ChatMessage = {
-      id: `temp-user-${Date.now()}`,
-      role: 'user',
-      content: msg,
-      timestamp: Date.now()
-    };
+    const userMsg: ChatMessage = { id: `temp-user-${Date.now()}`, role: 'user', content: msg, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
-
     try {
       const data = await sahayakApi.sendMessage(sessionId, msg);
       setProfile(data.profile);
@@ -80,14 +63,11 @@ export const App: React.FC = () => {
       setReport(data.report || null);
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Append an assistant message indicating failure so the user is informed
-      const errorMsg: ChatMessage = {
-        id: `temp-error-${Date.now()}`,
-        role: 'assistant',
+      setMessages(prev => [...prev, {
+        id: `temp-error-${Date.now()}`, role: 'assistant',
         content: '⚠️ Connection error: Failed to reach the server. Please verify the backend is running and try again.',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, errorMsg]);
+        timestamp: Date.now(),
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -100,25 +80,16 @@ export const App: React.FC = () => {
       setProfile(data.profile);
       setMessages(data.messages);
       setActiveMode('chat');
-      setMissingFields([]);
-      setRecommendations([]);
-      setReport(null);
-      setSelectedSchemeId(null);
-      setSelectedSchemeName(null);
-      setNextQuestion(null);
-      setApplicationAnswers({});
-      setSummaryReport(null);
+      setMissingFields([]); setRecommendations([]); setReport(null);
+      setSelectedSchemeId(null); setSelectedSchemeName(null);
+      setNextQuestion(null); setApplicationAnswers({}); setSummaryReport(null);
     } catch (error) {
       console.error('Failed to reset session:', error);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `temp-reset-error-${Date.now()}`,
-          role: 'assistant',
-          content: '⚠️ Failed to reset the session. The server might be unreachable.',
-          timestamp: Date.now()
-        }
-      ]);
+      setMessages(prev => [...prev, {
+        id: `temp-reset-error-${Date.now()}`, role: 'assistant',
+        content: '⚠️ Failed to reset the session. The server might be unreachable.',
+        timestamp: Date.now(),
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -154,9 +125,7 @@ export const App: React.FC = () => {
       setNextQuestion(data.nextQuestion);
       setApplicationAnswers(data.applicationAnswers || {});
       setMessages(data.messages);
-      if (data.summaryReport) {
-        setSummaryReport(data.summaryReport);
-      }
+      if (data.summaryReport) setSummaryReport(data.summaryReport);
     } catch (error: any) {
       console.error('Failed to submit answer:', error);
       if (error.response?.status === 404) {
@@ -169,29 +138,22 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleBackToChat = () => {
-    setActiveMode('chat');
-    // Maintain answers and summary in session but return to intake view
-  };
+  const handleBackToChat = () => setActiveMode('chat');
 
   if (initError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 p-6">
-        <div className="glass-panel p-8 rounded-2xl max-w-md w-full border border-rose-500/20 text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent pointer-events-none" />
-          <div className="bg-rose-500/10 p-3 rounded-full border border-rose-500/20 text-rose-400 w-fit mx-auto mb-4">
-            <ShieldAlert className="h-8 w-8" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-ink-950 text-ink-100 p-6">
+        <div className="surface p-8 max-w-md w-full text-center">
+          <div className="mx-auto h-11 w-11 grid place-items-center rounded-lg bg-danger/10 text-danger border border-danger/20">
+            <ShieldAlert className="h-5 w-5" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white mb-2">Connection Failure</h1>
-          <p className="text-sm text-slate-400 mb-6">
-            Unable to connect to the Sahayak AI backend server. Please make sure the backend server is running on port 5001.
+          <h1 className="mt-5 text-lg font-semibold text-white">Connection failure</h1>
+          <p className="mt-2 text-sm text-ink-300 leading-relaxed">
+            Unable to reach the Sahayak AI backend. Confirm the backend is running on port 5001 and retry.
           </p>
-          <button
-            onClick={initialize}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer border border-indigo-500/30"
-          >
+          <button onClick={initialize} className="btn-primary w-full mt-6">
             <RefreshCw className="h-4 w-4" />
-            Retry Connection
+            Retry connection
           </button>
         </div>
       </div>
@@ -200,59 +162,56 @@ export const App: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
-        <h1 className="text-xl font-bold tracking-tight">Initializing Sahayak AI Platform...</h1>
-        <p className="text-sm text-slate-400 mt-1">Connecting to server and caching database index</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-ink-950 text-ink-100">
+        <Loader2 className="h-7 w-7 animate-spin text-ink-300 mb-4" strokeWidth={1.5} />
+        <h1 className="text-base font-semibold tracking-tight text-white">Initializing Sahayak AI</h1>
+        <p className="text-[12.5px] text-ink-400 mt-1">Connecting to server and caching database index</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden text-slate-100">
-      {/* Top Navigation / Dashboard Header */}
-      <header className="flex-shrink-0 bg-slate-900/40 border-b border-slate-800/80 px-6 py-4 flex items-center justify-between backdrop-blur-md">
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-ink-950 text-ink-100">
+      <header className="flex-shrink-0 border-b border-white/[0.06] bg-ink-950/90 backdrop-blur-md px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-r from-indigo-500 to-emerald-500 p-2.5 rounded-xl text-white font-black text-xl shadow-lg shadow-indigo-500/10">
-            🤝
-          </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-              Sahayak AI
-              <span className="flex items-center gap-0.5 bg-indigo-500/15 border border-indigo-500/30 text-[10px] text-indigo-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                <Sparkles className="h-2.5 w-2.5" />
-                V1.0
+          <Link to="/" className="btn-ghost text-[12.5px] px-2 py-1.5 -ml-2">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
+          </Link>
+          <div className="h-5 w-px bg-white/[0.08]" />
+          <div className="flex items-center gap-2.5">
+            <span className="grid place-items-center h-6 w-6 rounded-md bg-white text-ink-950 font-display font-bold text-[11px]">
+              S
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display font-semibold tracking-tight text-[14px] text-white">
+                Sahayak AI
               </span>
-            </h1>
-            <p className="text-xs text-slate-400 font-medium">Gov Welfare Scheme Decision-Support Platform</p>
+              <span className="text-[11px] text-ink-400 font-mono">Assessment workspace</span>
+            </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-6 text-xs text-slate-400 font-semibold">
-          <span className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-            <BookOpen className="h-4 w-4 text-indigo-400" />
-            V1 CSV Mode
+        <div className="hidden md:flex items-center gap-2">
+          <span className="pill-neutral">
+            <Database className="h-3 w-3" />
+            v1 · CSV index
           </span>
-          <span className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-            <ShieldAlert className="h-4 w-4 text-emerald-400" />
-            Deterministic Eligibility Engine
+          <span className="pill-success">
+            <ShieldCheck className="h-3 w-3" />
+            Deterministic engine
           </span>
         </div>
       </header>
 
-      {/* Main Workspace Layout */}
-      <main className="flex-1 flex overflow-hidden p-6 gap-6">
-        {/* Left Side: Citizen Profile Intake Display (30% width) */}
-        <div className="w-[30%] h-full flex-shrink-0">
+      <main className="flex-1 flex overflow-hidden p-5 gap-5">
+        <div className="w-[28%] min-w-[320px] h-full flex-shrink-0">
           <ProfilePanel profile={profile} missingFields={missingFields} />
         </div>
 
-        {/* Right Side: Intake Dialogue OR Application workflow (70% width) */}
         <div className="flex-1 h-full overflow-hidden">
           {activeMode === 'chat' ? (
-            <div className="flex h-full gap-6">
-              {/* Intake Chat Panel (40% width) */}
-              <div className="w-[55%] h-full flex-shrink-0">
+            <div className="flex h-full gap-5">
+              <div className="w-[52%] h-full flex-shrink-0">
                 <ChatPanel
                   messages={messages}
                   onSendMessage={handleSendMessage}
@@ -260,8 +219,6 @@ export const App: React.FC = () => {
                   onReset={handleReset}
                 />
               </div>
-
-              {/* Recommendations view (45% width) */}
               <div className="flex-1 h-full">
                 <RecommendationsPanel
                   recommendations={recommendations}
@@ -272,7 +229,6 @@ export const App: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* Application form progression / FSM mode */
             <ApplicationFlowPanel
               schemeName={selectedSchemeName || 'Welfare Scheme Application'}
               nextQuestion={nextQuestion}

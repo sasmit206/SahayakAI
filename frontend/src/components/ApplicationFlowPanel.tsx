@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FormField } from '../services/api';
-import { ArrowLeft, Check, ClipboardCheck, ArrowRight, Printer, AlertTriangle, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, ArrowRight, Printer, AlertTriangle, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ApplicationFlowPanelProps {
   schemeName: string;
@@ -13,239 +14,184 @@ interface ApplicationFlowPanelProps {
 }
 
 export const ApplicationFlowPanel: React.FC<ApplicationFlowPanelProps> = ({
-  schemeName,
-  nextQuestion,
-  applicationAnswers,
-  summaryReport,
-  onAnswerSubmit,
-  onBackToChat,
-  isLoading,
+  schemeName, nextQuestion, applicationAnswers, summaryReport,
+  onAnswerSubmit, onBackToChat, isLoading,
 }) => {
   const [currentValue, setCurrentValue] = useState<any>('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isLoading || !nextQuestion) return;
 
-    // Validation
-    if (nextQuestion) {
-      if (nextQuestion.type === 'boolean') {
-        onAnswerSubmit(currentValue === 'true' || currentValue === true);
-        setCurrentValue('');
-      } else if (nextQuestion.type === 'choice') {
-        if (!currentValue) {
-          setErrorMessage('Please select an option');
-          return;
-        }
-        onAnswerSubmit(currentValue);
-        setCurrentValue('');
-      } else if (nextQuestion.type === 'number') {
-        const parsed = parseFloat(currentValue);
-        if (isNaN(parsed)) {
-          setErrorMessage('Please enter a valid number');
-          return;
-        }
-        onAnswerSubmit(parsed);
-        setCurrentValue('');
-      } else {
-        if (!currentValue.trim()) {
-          setErrorMessage('This field is required');
-          return;
-        }
-        onAnswerSubmit(currentValue.trim());
-        setCurrentValue('');
-      }
-      setErrorMessage('');
+    if (nextQuestion.type === 'boolean') {
+      onAnswerSubmit(currentValue === 'true' || currentValue === true);
+      setCurrentValue('');
+    } else if (nextQuestion.type === 'choice') {
+      if (!currentValue) return setErrorMessage('Please select an option');
+      onAnswerSubmit(currentValue); setCurrentValue('');
+    } else if (nextQuestion.type === 'number') {
+      const parsed = parseFloat(currentValue);
+      if (isNaN(parsed)) return setErrorMessage('Please enter a valid number');
+      onAnswerSubmit(parsed); setCurrentValue('');
+    } else {
+      if (!currentValue.trim()) return setErrorMessage('This field is required');
+      onAnswerSubmit(currentValue.trim()); setCurrentValue('');
     }
+    setErrorMessage('');
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const answeredEntries = Object.entries(applicationAnswers);
 
   return (
-    <div className="glass-panel rounded-2xl flex flex-col h-full overflow-hidden shadow-2xl">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4 bg-slate-950/20">
+    <div className="surface flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
         <div className="flex items-center gap-3">
-          <button
-            onClick={onBackToChat}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
+          <button onClick={onBackToChat} className="btn-ghost px-2 py-1.5 text-[12.5px]">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
           </button>
+          <div className="h-5 w-px bg-white/[0.08]" />
           <div>
-            <h2 className="font-bold text-slate-100">{schemeName}</h2>
-            <p className="text-xs text-slate-400">
-              {summaryReport ? 'Application Summary' : 'Deterministic Application Flow'}
+            <h2 className="text-[15px] font-semibold tracking-tight text-white">{schemeName}</h2>
+            <p className="text-[11.5px] text-ink-400 mt-0.5">
+              {summaryReport ? 'Application summary' : 'Deterministic application flow'}
             </p>
           </div>
         </div>
+        {summaryReport && (
+          <button onClick={() => window.print()} className="btn-secondary text-[12.5px] px-3 py-1.5">
+            <Printer className="h-3.5 w-3.5" />
+            Print
+          </button>
+        )}
       </div>
 
-      {/* Main Workspace */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {summaryReport ? (
-          /* Finished State: Markdown summary */
-          <div className="space-y-6">
-            <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl flex items-center gap-3 text-emerald-400">
-              <ClipboardCheck className="h-5 w-5" />
-              <div>
-                <p className="text-sm font-bold">Intake Questionnaire Complete!</p>
-                <p className="text-xs text-slate-400">A briefing document has been compiled below.</p>
-              </div>
-            </div>
-
-            <div className="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed whitespace-pre-wrap p-6 bg-slate-950/40 border border-slate-900 rounded-2xl overflow-x-auto print:bg-white print:text-black">
-              {summaryReport}
-            </div>
-
-            {/* Print and Return buttons */}
-            <div className="flex items-center gap-3 justify-end border-t border-slate-800 pt-4">
-              <button onClick={handlePrint} className="btn-secondary flex items-center gap-1.5 text-xs py-2.5">
-                <Printer className="h-4 w-4" />
-                Print Briefing
-              </button>
-              <button onClick={onBackToChat} className="btn-primary text-xs py-2.5">
-                Return to Dashboard
-              </button>
-            </div>
-          </div>
-        ) : nextQuestion ? (
-          /* In Progress State: Form field question */
-          <div className="max-w-xl mx-auto py-8">
-            {/* Progress indicator */}
-            <div className="mb-8">
-              <div className="flex justify-between items-center text-xs text-slate-400 mb-2">
-                <span>Application Form Step</span>
-                <span className="font-bold text-indigo-400">Deterministic Intake</span>
-              </div>
-              <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-indigo-500 h-full transition-all duration-300"
-                  style={{
-                    width: `${Math.max(10, (Object.keys(applicationAnswers).length / 6) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Question Card */}
-            <form onSubmit={handleSubmit} className="glass-card p-6 border-slate-800 rounded-2xl space-y-6">
-              <div className="flex gap-3 items-start">
-                <div className="bg-indigo-500/20 p-2.5 rounded-lg border border-indigo-500/30 text-indigo-400 flex-shrink-0">
-                  <HelpCircle className="h-5 w-5" />
+      <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="max-w-3xl mx-auto">
+          {summaryReport ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg grid place-items-center bg-success/10 border border-success/20 text-success">
+                  <ClipboardCheck className="h-4 w-4" strokeWidth={1.6} />
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Required Answer</span>
-                  <h3 className="text-base font-bold text-slate-100 mt-0.5 leading-snug">
-                    {nextQuestion.label}
-                  </h3>
+                  <h3 className="text-white font-semibold text-[16px]">Application complete</h3>
+                  <p className="text-[12.5px] text-ink-400">Summary report ready for review</p>
                 </div>
               </div>
+              <div className="surface-muted p-6 report-prose">{summaryReport}</div>
+            </motion.div>
+          ) : nextQuestion ? (
+            <motion.form
+              key={nextQuestion.key}
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-6"
+            >
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-ink-400" strokeWidth={1.6} />
+                <span className="text-[11px] uppercase tracking-[0.12em] text-ink-400 font-medium">
+                  Question · field <span className="font-mono">{nextQuestion.key}</span>
+                </span>
+              </div>
 
-              {/* Dynamic Form Control */}
-              <div className="space-y-2">
+              <h3 className="font-display text-white text-2xl tracking-tightest font-semibold leading-tight">
+                {nextQuestion.label}
+              </h3>
+
+              <div className="space-y-3">
                 {nextQuestion.type === 'choice' && nextQuestion.choices ? (
-                  <div className="space-y-2">
-                    {nextQuestion.choices.map((choice) => (
-                      <label
-                        key={choice}
-                        className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition-all ${
-                          currentValue === choice
-                            ? 'bg-indigo-600/20 border-indigo-500 text-white'
-                            : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-300'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={nextQuestion.key}
-                          value={choice}
-                          checked={currentValue === choice}
-                          onChange={() => {
-                            setCurrentValue(choice);
-                            setErrorMessage('');
-                          }}
-                          className="text-indigo-600 focus:ring-0 focus:ring-offset-0 bg-slate-900 border-slate-700"
-                        />
-                        <span className="text-sm font-medium">{choice}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : nextQuestion.type === 'boolean' ? (
-                  <div className="flex gap-4">
-                    {[
-                      { label: 'Yes', val: true },
-                      { label: 'No', val: false },
-                    ].map((opt) => (
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {nextQuestion.choices.map((c) => (
                       <button
-                        key={opt.label}
                         type="button"
-                        onClick={() => {
-                          setCurrentValue(opt.val);
-                          setErrorMessage('');
-                        }}
-                        className={`flex-1 p-3.5 border rounded-xl font-bold transition-all text-center text-sm ${
-                          currentValue === opt.val
-                            ? 'bg-indigo-600/20 border-indigo-500 text-white'
-                            : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
+                        key={c}
+                        onClick={() => setCurrentValue(c)}
+                        className={`text-left px-4 py-3 rounded-lg border text-[13.5px] transition-colors ${
+                          currentValue === c
+                            ? 'bg-white text-ink-950 border-white'
+                            : 'bg-ink-850 text-ink-100 border-white/[0.06] hover:border-white/[0.16]'
                         }`}
                       >
-                        {opt.label}
+                        {c}
                       </button>
                     ))}
                   </div>
-                ) : nextQuestion.type === 'number' ? (
-                  <input
-                    type="number"
-                    value={currentValue}
-                    onChange={(e) => {
-                      setCurrentValue(e.target.value);
-                      setErrorMessage('');
-                    }}
-                    placeholder={nextQuestion.placeholder || 'Enter value'}
-                    className="w-full glass-input text-sm"
-                    autoFocus
-                  />
+                ) : nextQuestion.type === 'boolean' ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {[['true', 'Yes'], ['false', 'No']].map(([val, lbl]) => (
+                      <button
+                        type="button"
+                        key={val}
+                        onClick={() => setCurrentValue(val)}
+                        className={`px-4 py-3 rounded-lg border text-[13.5px] transition-colors ${
+                          currentValue === val
+                            ? 'bg-white text-ink-950 border-white'
+                            : 'bg-ink-850 text-ink-100 border-white/[0.06] hover:border-white/[0.16]'
+                        }`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
                 ) : (
                   <input
-                    type="text"
+                    type={nextQuestion.type === 'number' ? 'number' : 'text'}
                     value={currentValue}
-                    onChange={(e) => {
-                      setCurrentValue(e.target.value);
-                      setErrorMessage('');
-                    }}
-                    placeholder={nextQuestion.placeholder || 'Enter value'}
-                    className="w-full glass-input text-sm"
+                    onChange={(e) => setCurrentValue(e.target.value)}
+                    placeholder={nextQuestion.placeholder || 'Type your answer…'}
+                    className="input"
                     autoFocus
                   />
                 )}
 
                 {errorMessage && (
-                  <div className="flex items-center gap-1.5 text-xs text-rose-400 bg-rose-500/5 p-2.5 rounded-lg border border-rose-500/10">
+                  <p className="flex items-center gap-1.5 text-[12.5px] text-danger">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     {errorMessage}
-                  </div>
+                  </p>
                 )}
               </div>
 
-              {/* Form Action */}
-              <div className="flex justify-end pt-2 border-t border-slate-800/80">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-primary flex items-center gap-1.5 text-xs py-2.5 px-4 font-bold"
-                >
-                  {isLoading ? 'Saving...' : 'Next Step'}
-                  <ArrowRight className="h-4 w-4" />
+              <div className="pt-2 flex items-center justify-between">
+                <span className="text-[12px] text-ink-400 font-mono">
+                  {answeredEntries.length} answered
+                </span>
+                <button type="submit" disabled={isLoading} className="btn-primary text-[13px] px-5 py-2.5">
+                  Continue
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
-            </form>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-slate-400">Loading form questionnaire...</div>
-        )}
+            </motion.form>
+          ) : (
+            <div className="text-center py-16 text-ink-400 text-[13px]">Preparing next question…</div>
+          )}
+
+          {answeredEntries.length > 0 && !summaryReport && (
+            <div className="mt-12 pt-8 border-t border-white/[0.06]">
+              <p className="text-[10.5px] uppercase tracking-[0.12em] text-ink-400 font-medium mb-4">
+                Answers captured
+              </p>
+              <div className="space-y-1.5">
+                {answeredEntries.map(([k, v]) => (
+                  <div key={k} className="flex items-center justify-between gap-4 px-3 py-2 rounded-md hover:bg-white/[0.03]">
+                    <span className="text-[12.5px] font-mono text-ink-400">{k}</span>
+                    <span className="text-[13px] text-white flex items-center gap-2">
+                      {String(v)}
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success" strokeWidth={1.8} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
