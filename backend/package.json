@@ -1,0 +1,38 @@
+{
+  "name": "sahayak-ai-backend",
+  "version": "1.0.0",
+  "description": "Sahayak AI Express Backend Service",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "ingest": "ts-node src/scripts/ingest.ts",
+    "ingest-pdfs": "ts-node src/scripts/ingestPdfs.ts",
+    "evaluate": "ts-node src/scripts/evaluate.ts"
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "chromadb": "^1.8.1",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "groq-sdk": "^0.3.3",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "pdf-poppler": "^0.2.1",
+    "tesseract.js": "^5.1.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^20.11.24",
+    "@types/uuid": "^9.0.8",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

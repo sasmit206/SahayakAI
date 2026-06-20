@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body { background: #08090c; }
+  body {
+    @apply font-sans text-ink-100 antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tightest text-white;
+    font-feature-settings: "ss01";
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+}
+
+@layer components {
+  /* Surface primitives — solid, hairline borders. No backdrop-blur, no glow. */
+  .surface {
+    @apply bg-ink-900 border border-white/[0.06] rounded-2xl shadow-card;
+  }
+  .surface-muted {
+    @apply bg-ink-850 border border-white/[0.05] rounded-2xl;
+  }
+  .surface-row {
+    @apply bg-ink-850/60 border border-white/[0.05] rounded-xl;
+  }
+  .hairline { @apply border-white/[0.06]; }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium text-sm
+      rounded-lg px-4 py-2.5 transition-colors duration-150
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-white text-ink-950 hover:bg-ink-100 active:bg-ink-200;
+  }
+  .btn-secondary {
+    @apply btn bg-ink-800 text-ink-100 border border-white/[0.06] hover:bg-ink-700;
+  }
+  .btn-ghost {
+    @apply btn text-ink-200 hover:bg-white/[0.04] hover:text-white;
+  }
+
+  /* Status pills */
+  .pill {
+    @apply inline-flex items-center gap-1.5 text-[10.5px] font-medium uppercase
+      tracking-[0.08em] px-2 py-0.5 rounded-md border;
+  }
+  .pill-success { @apply pill bg-success/10 text-success border-success/20; }
+  .pill-warning { @apply pill bg-warning/10 text-warning border-warning/20; }
+  .pill-neutral { @apply pill bg-white/[0.04] text-ink-200 border-white/[0.06]; }
+  .pill-accent  { @apply pill bg-accent/10 text-accent border-accent/20; }
+
+  /* Inputs */
+  .input {
+    @apply w-full bg-ink-850 border border-white/[0.06] rounded-lg
+      px-3.5 py-2.5 text-sm text-ink-100 placeholder:text-ink-400
+      focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20
+      transition-colors;
+  }
+
+  /* Eyebrow label used on landing sections */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-ink-300;
+  }
+
+  /* Grid background for hero/sections (very subtle, no neon) */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+}
+
+/* Prose tweaks for the report view */
+.report-prose {
+  @apply text-sm leading-relaxed text-ink-200 whitespace-pre-wrap;
+}
