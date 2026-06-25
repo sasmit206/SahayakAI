@@ -1,7 +1,14 @@
+/**
+ * RecommendationsPanel
+ * - Translatable labels via useLang()
+ * - Animated scheme cards
+ * - Apply button with loading state
+ */
 import React, { useState } from 'react';
 import { SchemeRecommendation } from '../services/api';
-import { CheckCircle2, ChevronRight, Award, Compass, FileText, ClipboardList } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Award, Compass, FileText, ClipboardList, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLang } from '../context/LanguageContext';
 
 interface RecommendationsPanelProps {
   recommendations: SchemeRecommendation[];
@@ -13,17 +20,19 @@ interface RecommendationsPanelProps {
 export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
   recommendations, report, onApplyScheme, isApplying,
 }) => {
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState<'schemes' | 'report'>('schemes');
 
   return (
     <div className="surface flex flex-col h-full overflow-hidden">
+      {/* Tabs */}
       <div className="flex items-center justify-between border-b border-white/[0.06] px-5 pt-4">
         <div className="flex gap-1">
           <TabButton
             active={activeTab === 'schemes'}
             onClick={() => setActiveTab('schemes')}
             icon={<Compass className="h-3.5 w-3.5" strokeWidth={1.6} />}
-            label={`Eligible schemes`}
+            label={t.recTitle}
             badge={recommendations.length}
           />
           <TabButton
@@ -40,7 +49,7 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-5">
         {activeTab === 'schemes' ? (
           recommendations.length === 0 ? (
-            <EmptyState />
+            <EmptyState message={t.recEmpty} />
           ) : (
             <div className="space-y-3">
               <AnimatePresence initial={false}>
@@ -98,17 +107,28 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                         <div className="mt-5 flex items-center justify-between">
                           {rec.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 text-[10.5px] text-ink-400 font-mono">
-                              {rec.tags.slice(0, 3).map((t, i) => <span key={i}>#{t}</span>)}
+                              {rec.tags.slice(0, 3).map((tag, i) => <span key={i}>#{tag}</span>)}
                             </div>
                           )}
-                          <button
+                          <motion.button
                             onClick={() => onApplyScheme(rec.schemeId, rec.schemeName)}
                             disabled={isApplying}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
                             className="btn-primary text-[12.5px] px-3.5 py-2"
                           >
-                            Start application
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </button>
+                            {isApplying ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                {t.recApplying}
+                              </>
+                            ) : (
+                              <>
+                                {t.recApply}
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </>
+                            )}
+                          </motion.button>
                         </div>
                       </div>
                     </div>
@@ -126,7 +146,8 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
 };
 
 function TabButton({ active, onClick, icon, label, badge, disabled }: {
-  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; badge?: number; disabled?: boolean;
+  active: boolean; onClick: () => void; icon: React.ReactNode;
+  label: string; badge?: number; disabled?: boolean;
 }) {
   return (
     <button
@@ -152,14 +173,12 @@ function TabButton({ active, onClick, icon, label, badge, disabled }: {
   );
 }
 
-function EmptyState() {
+function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-10 surface-muted border-dashed">
       <ClipboardList className="h-7 w-7 text-ink-500 mb-3" strokeWidth={1.5} />
       <p className="text-[14px] text-white font-medium">No recommendations yet</p>
-      <p className="mt-1.5 text-[12.5px] text-ink-400 max-w-xs leading-relaxed">
-        Complete the citizen intake on the left. Sahayak will surface eligible schemes here as the profile fills in.
-      </p>
+      <p className="mt-1.5 text-[12.5px] text-ink-400 max-w-xs leading-relaxed">{message}</p>
     </div>
   );
 }
