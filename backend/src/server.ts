@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config/env';
 import { apiRouter } from './api/router';
+import { adminRouter } from './api/adminRouter';
 import { initializeDbService } from './services/dbService';
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Register routes
 app.use('/api', apiRouter);
+app.use('/api/admin', adminRouter);
 
 // Root healthcheck
 app.get('/health', (req, res) => {

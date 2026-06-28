@@ -12,6 +12,39 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const apiRouter = Router();
 
+function normalizeDisabilityAnswer(message: string): boolean | null {
+  const normalized = message.trim().replace(/[\s.,!?;:]+$/g, '').replace(/^[\s.,!?;:]+/g, '');
+  const lower = normalized.toLowerCase();
+
+  if (/^(yes|true|1|y)$/i.test(normalized)) return true;
+  if (/^(no|false|0|n|none)$/i.test(normalized)) return false;
+
+  if (
+    /\bdoes(?:n['’]?t| not) have disability\b/i.test(lower) ||
+    /\bdoes(?:n['’]?t| not) have any disability\b/i.test(lower) ||
+    /\bhas no disability\b/i.test(lower) ||
+    /\bnot disabled\b/i.test(lower) ||
+    /\bwithout disability\b/i.test(lower) ||
+    /\bnot handicapped\b/i.test(lower) ||
+    /\bno handicap\b/i.test(lower)
+  ) {
+    return false;
+  }
+
+  if (
+    /\bhas disability\b/i.test(lower) ||
+    /\bhas any disability\b/i.test(lower) ||
+    /\bdisabled\b/i.test(lower) ||
+    /\bhandicap(?:ped)?\b/i.test(lower) ||
+    /\bdivyang\b/i.test(lower) ||
+    /\bdifferently abled\b/i.test(lower)
+  ) {
+    return true;
+  }
+
+  return null;
+}
+
 // Create new session
 apiRouter.post('/session', (req: Request, res: Response) => {
   const session = createSession();
@@ -83,6 +116,15 @@ apiRouter.post('/chat', async (req: Request, res: Response) => {
   console.log(`[API] Extracting profile fields from user statement: "${message}"`);
   const extracted = await extractProfile(message, session.profile);
   session.profile = mergeProfile(session.profile, extracted);
+
+  // Hard fallback for the disability question so short yes/no replies do not
+  // get stuck if the extractor misses them.
+  if (session.profile.disabilityStatus === null) {
+    const disabilityAnswer = normalizeDisabilityAnswer(message);
+    if (disabilityAnswer !== null) {
+      session.profile.disabilityStatus = disabilityAnswer;
+    }
+  }
 
   // 3. Detect missing fields
   const { missingFields, nextQuestion } = detectMissingFields(session.profile);

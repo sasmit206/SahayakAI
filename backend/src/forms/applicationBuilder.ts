@@ -59,6 +59,8 @@ Please write a structured report containing:
 5. **Recommended Next Steps**: What the caseworker should do next (e.g. submit online at URL, visit District Office).
 `;
 
+  console.log('[ApplicationBuilder] Calling Groq API for application summary generation...');
+
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [

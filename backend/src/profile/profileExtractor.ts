@@ -140,13 +140,47 @@ function extractGeneralRegex(text: string, current: CitizenProfile): CitizenProf
   }
 
   // Disability Status
-  if (lowerText.includes('disabled') || lowerText.includes('disability') || lowerText.includes('handicapped')) {
-    profile.disabilityStatus = true;
-  } else if (lowerText.includes('no disability') || lowerText.includes('not disabled')) {
-    profile.disabilityStatus = false;
+  const disabilityStatus = parseDisabilityStatus(text);
+  if (disabilityStatus !== null) {
+    profile.disabilityStatus = disabilityStatus;
   }
 
   return profile;
+}
+
+function parseDisabilityStatus(text: string): boolean | null {
+  const trimmedText = text.trim();
+  const normalizedText = trimmedText.replace(/[\s.,!?;:]+$/g, '').replace(/^[\s.,!?;:]+/g, '');
+  const lowerText = normalizedText.toLowerCase();
+
+  if (/^(yes|true|1|y)$/i.test(normalizedText)) return true;
+  if (/^(no|false|0|n|none)$/i.test(normalizedText)) return false;
+
+  const negativePatterns = [
+    /\bdoes(?:n['’]?t| not) have disability\b/i,
+    /\bdoes(?:n['’]?t| not) have any disability\b/i,
+    /\bhas no disability\b/i,
+    /\bno disability\b/i,
+    /\bnot disabled\b/i,
+    /\bwithout disability\b/i,
+    /\bnot handicapped\b/i,
+    /\bno handicap\b/i,
+    /\bfree of disability\b/i,
+    /\bphysically? not disabled\b/i,
+  ];
+  if (negativePatterns.some((pattern) => pattern.test(lowerText))) return false;
+
+  const positivePatterns = [
+    /\bhas disability\b/i,
+    /\bhas any disability\b/i,
+    /\bdisabled\b/i,
+    /\bhandicap(?:ped)?\b/i,
+    /\bdivyang\b/i,
+    /\bdifferently abled\b/i,
+  ];
+  if (positivePatterns.some((pattern) => pattern.test(lowerText))) return true;
+
+  return null;
 }
 
 // Regex Fallback Extractor with context-aware direct answer parsing
@@ -269,10 +303,9 @@ function extractProfileRegex(text: string, current: CitizenProfile): CitizenProf
           break;
 
         case 'disabilityStatus':
-          if (/yes|disabled|handicap|true/i.test(trimmedText)) {
-            profile.disabilityStatus = true;
-          } else if (/no|none|false/i.test(trimmedText)) {
-            profile.disabilityStatus = false;
+          const disabilityAnswer = parseDisabilityStatus(trimmedText);
+          if (disabilityAnswer !== null) {
+            profile.disabilityStatus = disabilityAnswer;
           }
           break;
       }
@@ -361,11 +394,9 @@ Return ONLY the updated JSON profile object. No explanations, no markdown format
         if (typeof parsed.disabilityStatus === 'boolean') {
           disabilityStatus = parsed.disabilityStatus;
         } else if (typeof parsed.disabilityStatus === 'string') {
-          const valLower = parsed.disabilityStatus.toLowerCase();
-          if (['yes', 'true', 'disabled', 'handicapped'].includes(valLower)) {
-            disabilityStatus = true;
-          } else if (['no', 'false', 'none', 'normal'].includes(valLower)) {
-            disabilityStatus = false;
+          const normalizedDisability = parseDisabilityStatus(parsed.disabilityStatus);
+          if (normalizedDisability !== null) {
+            disabilityStatus = normalizedDisability;
           }
         }
       }

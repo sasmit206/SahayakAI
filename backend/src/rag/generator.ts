@@ -20,6 +20,8 @@ export async function generateRecommendationsReport(
     const groq = new Groq({ apiKey: config.GROQ_API_KEY });
     const prompt = buildRecommendationPrompt(profile, scoredSchemes);
 
+    console.log('[Generator] Calling Groq API for report generation...');
+
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
