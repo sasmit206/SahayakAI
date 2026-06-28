@@ -1,3 +1,9 @@
+/**
+ * App.tsx
+ * Root component — session management, routing between views.
+ * LanguageSwitcher added to header.
+ * All labels use useLang() for i18n.
+ */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { sahayakApi, CitizenProfile, ChatMessage, SchemeRecommendation, FormField } from './services/api';
@@ -5,9 +11,14 @@ import { ProfilePanel } from './components/ProfilePanel';
 import { ChatPanel } from './components/ChatPanel';
 import { RecommendationsPanel } from './components/RecommendationsPanel';
 import { ApplicationFlowPanel } from './components/ApplicationFlowPanel';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { ShieldAlert, Loader2, RefreshCw, ArrowLeft, Database, ShieldCheck } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useLang } from './context/LanguageContext';
 
 export const App: React.FC = () => {
+  const { t } = useLang();
+
   const [sessionId, setSessionId] = useState<string>('');
   const [profile, setProfile] = useState<CitizenProfile>({
     name: null, age: null, gender: null, state: null, income: null,
@@ -140,43 +151,49 @@ export const App: React.FC = () => {
 
   const handleBackToChat = () => setActiveMode('chat');
 
+  /* ── Error state ── */
   if (initError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-ink-950 text-ink-100 p-6">
-        <div className="surface p-8 max-w-md w-full text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="surface p-8 max-w-md w-full text-center"
+        >
           <div className="mx-auto h-11 w-11 grid place-items-center rounded-lg bg-danger/10 text-danger border border-danger/20">
             <ShieldAlert className="h-5 w-5" />
           </div>
-          <h1 className="mt-5 text-lg font-semibold text-white">Connection failure</h1>
-          <p className="mt-2 text-sm text-ink-300 leading-relaxed">
-            Unable to reach the Sahayak AI backend. Confirm the backend is running on port 5001 and retry.
-          </p>
+          <h1 className="mt-5 text-lg font-semibold text-white">{t.errorTitle}</h1>
+          <p className="mt-2 text-sm text-ink-300 leading-relaxed">{t.errorBody}</p>
           <button onClick={initialize} className="btn-primary w-full mt-6">
             <RefreshCw className="h-4 w-4" />
-            Retry connection
+            {t.errorRetry}
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
+  /* ── Loading state ── */
   if (isInitializing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-ink-950 text-ink-100">
         <Loader2 className="h-7 w-7 animate-spin text-ink-300 mb-4" strokeWidth={1.5} />
-        <h1 className="text-base font-semibold tracking-tight text-white">Initializing Sahayak AI</h1>
-        <p className="text-[12.5px] text-ink-400 mt-1">Connecting to server and caching database index</p>
+        <h1 className="text-base font-semibold tracking-tight text-white">{t.initTitle}</h1>
+        <p className="text-[12.5px] text-ink-400 mt-1">{t.initSubtitle}</p>
       </div>
     );
   }
 
+  /* ── Main layout ── */
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-ink-950 text-ink-100">
+      {/* Header */}
       <header className="flex-shrink-0 border-b border-white/[0.06] bg-ink-950/90 backdrop-blur-md px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/" className="btn-ghost text-[12.5px] px-2 py-1.5 -ml-2">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back
+            {t.backLabel}
           </Link>
           <div className="h-5 w-px bg-white/[0.08]" />
           <div className="flex items-center gap-2.5">
@@ -185,24 +202,30 @@ export const App: React.FC = () => {
             </span>
             <div className="flex items-baseline gap-2">
               <span className="font-display font-semibold tracking-tight text-[14px] text-white">
-                Sahayak AI
+                {t.appName}
               </span>
-              <span className="text-[11px] text-ink-400 font-mono">Assessment workspace</span>
+              <span className="text-[11px] text-ink-400 font-mono">{t.appSubtitle}</span>
             </div>
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-2">
-          <span className="pill-neutral">
-            <Database className="h-3 w-3" />
-            v1 · CSV index
-          </span>
-          <span className="pill-success">
-            <ShieldCheck className="h-3 w-3" />
-            Deterministic engine
-          </span>
+
+        {/* Right side: pills + language switcher */}
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
+            <span className="pill-neutral">
+              <Database className="h-3 w-3" />
+              {t.versionLabel}
+            </span>
+            <span className="pill-success">
+              <ShieldCheck className="h-3 w-3" />
+              {t.engineLabel}
+            </span>
+          </div>
+          <LanguageSwitcher />
         </div>
       </header>
 
+      {/* Main */}
       <main className="flex-1 flex overflow-hidden p-5 gap-5">
         <div className="w-[28%] min-w-[320px] h-full flex-shrink-0">
           <ProfilePanel profile={profile} missingFields={missingFields} />
@@ -244,4 +267,5 @@ export const App: React.FC = () => {
     </div>
   );
 };
+
 export default App;
