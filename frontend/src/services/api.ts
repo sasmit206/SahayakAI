@@ -1,10 +1,13 @@
+/**
+ * api.ts
+ * All HTTP calls to the backend. Every request now includes `language`
+ * so the backend LLM responds in the correct language.
+ */
 import axios from 'axios';
 
 const client = axios.create({
   baseURL: '',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export interface CitizenProfile {
@@ -89,29 +92,36 @@ export interface AnswerResponse {
 }
 
 export const sahayakApi = {
-  createSession: async (): Promise<SessionResponse> => {
-    const res = await client.post('/api/session');
+  createSession: async (language = 'en'): Promise<SessionResponse> => {
+    const res = await client.post('/api/session', { language });
     return res.data;
   },
-  resetSession: async (sessionId: string): Promise<ChatResponse> => {
-    const res = await client.post('/api/reset', { sessionId });
+
+  resetSession: async (sessionId: string, language = 'en'): Promise<ChatResponse> => {
+    const res = await client.post('/api/reset', { sessionId, language });
     return res.data;
   },
-  sendMessage: async (sessionId: string, message: string): Promise<ChatResponse> => {
-    const res = await client.post('/api/chat', { sessionId, message });
+
+  /** language is sent with every message so the LLM always replies correctly */
+  sendMessage: async (sessionId: string, message: string, language = 'en'): Promise<ChatResponse> => {
+    const res = await client.post('/api/chat', { sessionId, message, language });
     return res.data;
   },
+
   selectScheme: async (
     sessionId: string,
     schemeId: string,
-    schemeName: string
+    schemeName: string,
+    language = 'en'
   ): Promise<SelectionResponse> => {
-    const res = await client.post('/api/select-scheme', { sessionId, schemeId, schemeName });
+    const res = await client.post('/api/select-scheme', { sessionId, schemeId, schemeName, language });
     return res.data;
   },
-  submitAnswer: async (sessionId: string, answer: any): Promise<AnswerResponse> => {
-    const res = await client.post('/api/submit-answer', { sessionId, answer });
+
+  submitAnswer: async (sessionId: string, answer: any, language = 'en'): Promise<AnswerResponse> => {
+    const res = await client.post('/api/submit-answer', { sessionId, answer, language });
     return res.data;
   },
 };
+
 export default sahayakApi;

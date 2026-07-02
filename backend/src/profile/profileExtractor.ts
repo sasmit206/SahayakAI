@@ -140,47 +140,13 @@ function extractGeneralRegex(text: string, current: CitizenProfile): CitizenProf
   }
 
   // Disability Status
-  const disabilityStatus = parseDisabilityStatus(text);
-  if (disabilityStatus !== null) {
-    profile.disabilityStatus = disabilityStatus;
+  if (lowerText.includes('disabled') || lowerText.includes('disability') || lowerText.includes('handicapped')) {
+    profile.disabilityStatus = true;
+  } else if (lowerText.includes('no disability') || lowerText.includes('not disabled')) {
+    profile.disabilityStatus = false;
   }
 
   return profile;
-}
-
-function parseDisabilityStatus(text: string): boolean | null {
-  const trimmedText = text.trim();
-  const normalizedText = trimmedText.replace(/[\s.,!?;:]+$/g, '').replace(/^[\s.,!?;:]+/g, '');
-  const lowerText = normalizedText.toLowerCase();
-
-  if (/^(yes|true|1|y)$/i.test(normalizedText)) return true;
-  if (/^(no|false|0|n|none)$/i.test(normalizedText)) return false;
-
-  const negativePatterns = [
-    /\bdoes(?:n['’]?t| not) have disability\b/i,
-    /\bdoes(?:n['’]?t| not) have any disability\b/i,
-    /\bhas no disability\b/i,
-    /\bno disability\b/i,
-    /\bnot disabled\b/i,
-    /\bwithout disability\b/i,
-    /\bnot handicapped\b/i,
-    /\bno handicap\b/i,
-    /\bfree of disability\b/i,
-    /\bphysically? not disabled\b/i,
-  ];
-  if (negativePatterns.some((pattern) => pattern.test(lowerText))) return false;
-
-  const positivePatterns = [
-    /\bhas disability\b/i,
-    /\bhas any disability\b/i,
-    /\bdisabled\b/i,
-    /\bhandicap(?:ped)?\b/i,
-    /\bdivyang\b/i,
-    /\bdifferently abled\b/i,
-  ];
-  if (positivePatterns.some((pattern) => pattern.test(lowerText))) return true;
-
-  return null;
 }
 
 // Regex Fallback Extractor with context-aware direct answer parsing
@@ -303,9 +269,11 @@ function extractProfileRegex(text: string, current: CitizenProfile): CitizenProf
           break;
 
         case 'disabilityStatus':
-          const disabilityAnswer = parseDisabilityStatus(trimmedText);
-          if (disabilityAnswer !== null) {
-            profile.disabilityStatus = disabilityAnswer;
+          // Catch: yes, no, true, false, disabled, handicapped, haan, nahi, etc.
+          if (/^(yes|y|1|true|disabled|handicap|haan|ha|ji)$/i.test(trimmedText) || /disabled|handicap/i.test(trimmedText)) {
+            profile.disabilityStatus = true;
+          } else if (/^(no|n|0|false|none|nahi|nai|nahi|normal)$/i.test(trimmedText)) {
+            profile.disabilityStatus = false;
           }
           break;
       }
@@ -319,6 +287,37 @@ export async function extractProfile(
   text: string,
   currentProfile: CitizenProfile
 ): Promise<CitizenProfile> {
+  // --- PRE-PASS: run regex first on short answers ---
+  // If the user replied with a short answer (≤5 words) AND the regex successfully
+  // fills the currently-missing field, skip Groq entirely. This fixes:
+  //   1. "no" / "yes" / "हाँ" / "नहीं" not being recognized for disabilityStatus
+  //   2. Disability question being asked multiple times
+  //   3. Any language's short answers being reliably captured without an LLM round-trip
+  const wordCount = text.trim().split(/\s+/).length;
+  if (wordCount <= 5) {
+    // Normalize common Hindi yes/no answers to English so the regex switch works
+    const normalizedText = text
+      .replace(/\bहाँ\b|\bहां\b|\bजी\b|\bजी हाँ\b/g, 'yes')
+      .replace(/\bनहीं\b|\bना\b|\bनही\b/g, 'no')
+      .replace(/\bपुरुष\b/g, 'male')
+      .replace(/\bमहिला\b|\bस्त्री\b/g, 'female')
+      .replace(/\bविवाहित\b/g, 'married')
+      .replace(/\bअविवाहित\b/g, 'single')
+      .replace(/\bविधवा\b|\bविधुर\b/g, 'widowed')
+      .replace(/\bतलाकशुदा\b/g, 'divorced');
+
+    const regexResult = extractProfileRegex(normalizedText, currentProfile);
+
+    // Check if regex resolved the first missing field
+    const firstMissing = (['name','age','gender','state','income','occupation','maritalStatus','category','disabilityStatus'] as (keyof CitizenProfile)[])
+      .find(f => currentProfile[f] === null || currentProfile[f] === undefined);
+
+    if (firstMissing && regexResult[firstMissing] !== null && regexResult[firstMissing] !== undefined) {
+      console.log(`[ProfileExtractor] Short-answer pre-pass resolved field "${firstMissing}" without Groq.`);
+      return regexResult;
+    }
+  }
+
   if (!config.GROQ_API_KEY) {
     console.log('[ProfileExtractor] GROQ_API_KEY not set. Using regex fallback extraction.');
     return extractProfileRegex(text, currentProfile);
@@ -394,9 +393,11 @@ Return ONLY the updated JSON profile object. No explanations, no markdown format
         if (typeof parsed.disabilityStatus === 'boolean') {
           disabilityStatus = parsed.disabilityStatus;
         } else if (typeof parsed.disabilityStatus === 'string') {
-          const normalizedDisability = parseDisabilityStatus(parsed.disabilityStatus);
-          if (normalizedDisability !== null) {
-            disabilityStatus = normalizedDisability;
+          const valLower = parsed.disabilityStatus.toLowerCase();
+          if (['yes', 'true', 'disabled', 'handicapped'].includes(valLower)) {
+            disabilityStatus = true;
+          } else if (['no', 'false', 'none', 'normal'].includes(valLower)) {
+            disabilityStatus = false;
           }
         }
       }

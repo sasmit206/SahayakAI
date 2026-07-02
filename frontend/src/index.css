@@ -84,3 +84,45 @@
 .report-prose {
   @apply text-sm leading-relaxed text-ink-200 whitespace-pre-wrap;
 }
+
+/* ═══════════════════════════════════════════════════
+   PRINT STYLESHEET — Professional A4 layout
+   Applied when: window.print() or Ctrl+P
+   ═══════════════════════════════════════════════════ */
+@media print {
+  /* Reset dark theme */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    font-size: 12pt;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Hide the main app shell — only the print window renders */
+  #root { display: none; }
+
+  /* A4 page setup */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 15mm 20mm 15mm;
+  }
+
+  /* Prevent cards/tables from splitting across pages */
+  .pdf-scheme-card,
+  .pdf-profile-table,
+  .pdf-section { page-break-inside: avoid; }
+
+  /* Section always starts on same page as its header */
+  h2 { page-break-after: avoid; }
+
+  /* Repeat table headers on each page */
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+}

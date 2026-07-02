@@ -1,6 +1,14 @@
+/**
+ * sessionManager.ts
+ * In-memory session store. Now stores the user's selected language so
+ * every subsequent request knows which language to use without requiring
+ * the client to re-send it (though the client also sends it on each request
+ * so the language can be updated mid-session without a refresh).
+ */
 import { v4 as uuidv4 } from 'uuid';
 import { CitizenProfile, INITIAL_PROFILE } from '../profile/profileExtractor';
 import { SchemeFormConfig } from './schemeFormConfigs';
+import { SupportedLanguage, GREETING } from '../i18n/backendStrings';
 
 export interface ChatMessage {
   id: string;
@@ -20,12 +28,13 @@ export interface CaseworkSession {
   currentFormQuestionIndex: number;
   formConfig: SchemeFormConfig | null;
   recommendationReport: string | null;
+  language: SupportedLanguage;   // ← NEW: persisted language for this session
   createdAt: number;
 }
 
 const SESSIONS_STORE = new Map<string, CaseworkSession>();
 
-export function createSession(): CaseworkSession {
+export function createSession(language: SupportedLanguage = 'en'): CaseworkSession {
   const sessionId = uuidv4();
   const session: CaseworkSession = {
     sessionId,
@@ -34,9 +43,9 @@ export function createSession(): CaseworkSession {
       {
         id: uuidv4(),
         role: 'assistant',
-        content: "Hello! I am Sahayak AI, your caseworker assistant. Let's start by understanding the citizen's profile. You can speak naturally, or write a statement like: 'I am Ram, a farmer from Bihar, married and earning ₹90,000 per year.'",
-        timestamp: Date.now()
-      }
+        content: GREETING[language],   // greeting in the correct language
+        timestamp: Date.now(),
+      },
     ],
     activeMode: 'chat',
     selectedSchemeId: null,
@@ -45,9 +54,10 @@ export function createSession(): CaseworkSession {
     currentFormQuestionIndex: -1,
     formConfig: null,
     recommendationReport: null,
-    createdAt: Date.now()
+    language,
+    createdAt: Date.now(),
   };
-  
+
   SESSIONS_STORE.set(sessionId, session);
   return session;
 }
@@ -60,9 +70,9 @@ export function saveSession(session: CaseworkSession): void {
   SESSIONS_STORE.set(session.sessionId, session);
 }
 
-export function resetSession(sessionId: string): CaseworkSession {
+export function resetSession(sessionId: string, language: SupportedLanguage = 'en'): CaseworkSession {
   const oldSession = SESSIONS_STORE.get(sessionId);
-  const newSession = createSession();
+  const newSession = createSession(language);
   if (oldSession) {
     newSession.sessionId = oldSession.sessionId;
   }

@@ -1,11 +1,16 @@
+/**
+ * missingFieldDetector.ts
+ * Detects which profile fields are still null and returns the next
+ * question to ask. Questions are now multilingual via backendStrings.
+ */
 import { CitizenProfile } from './profileExtractor';
+import { SupportedLanguage, MISSING_FIELD_QUESTIONS } from '../i18n/backendStrings';
 
 export interface MissingFieldsInfo {
   missingFields: (keyof CitizenProfile)[];
   nextQuestion: string | null;
 }
 
-// User-friendly field display names
 export const FIELD_LABELS: Record<keyof CitizenProfile, string> = {
   name: 'Name',
   age: 'Age',
@@ -18,66 +23,26 @@ export const FIELD_LABELS: Record<keyof CitizenProfile, string> = {
   disabilityStatus: 'Disability Status',
 };
 
-export function detectMissingFields(profile: CitizenProfile): MissingFieldsInfo {
-  const missingFields: (keyof CitizenProfile)[] = [];
-
+export function detectMissingFields(
+  profile: CitizenProfile,
+  language: SupportedLanguage = 'en'
+): MissingFieldsInfo {
   const requiredFields: (keyof CitizenProfile)[] = [
-    'name',
-    'age',
-    'gender',
-    'state',
-    'income',
-    'occupation',
-    'maritalStatus',
-    'category',
-    'disabilityStatus'
+    'name', 'age', 'gender', 'state', 'income',
+    'occupation', 'maritalStatus', 'category', 'disabilityStatus',
   ];
 
-  for (const field of requiredFields) {
-    if (profile[field] === null || profile[field] === undefined) {
-      missingFields.push(field);
-    }
-  }
+  const missingFields = requiredFields.filter(
+    (field) => profile[field] === null || profile[field] === undefined
+  );
 
   if (missingFields.length === 0) {
     return { missingFields: [], nextQuestion: null };
   }
 
-  // Generate question for the first missing field
   const nextField = missingFields[0];
-  let nextQuestion = '';
-
-  switch (nextField) {
-    case 'name':
-      nextQuestion = "Could you please tell me the citizen's name?";
-      break;
-    case 'age':
-      nextQuestion = "What is the applicant's age?";
-      break;
-    case 'gender':
-      nextQuestion = "What is the applicant's gender? (Male/Female/Other)";
-      break;
-    case 'state':
-      nextQuestion = "Which state is the applicant from?";
-      break;
-    case 'income':
-      nextQuestion = "What is the applicant's annual family income (in ₹)?";
-      break;
-    case 'occupation':
-      nextQuestion = "What is the applicant's occupation? (e.g., Farmer, Student, Construction Worker, etc.)";
-      break;
-    case 'maritalStatus':
-      nextQuestion = "What is the applicant's marital status? (Single/Married/Widowed/Divorced)";
-      break;
-    case 'category':
-      nextQuestion = "Which social category does the applicant belong to? (General, OBC, SC, ST)";
-      break;
-    case 'disabilityStatus':
-      nextQuestion = "Does the applicant have any physical disability? (Yes/No)";
-      break;
-    default:
-      nextQuestion = `Please provide information for: ${FIELD_LABELS[nextField]}.`;
-  }
+  const questions = MISSING_FIELD_QUESTIONS[language];
+  const nextQuestion = questions[nextField as string] ?? questions['default'];
 
   return { missingFields, nextQuestion };
 }
