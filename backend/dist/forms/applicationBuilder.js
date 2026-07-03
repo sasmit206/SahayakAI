@@ -9,6 +9,7 @@ const env_1 = require("../config/env");
 async function generateApplicationSummary(session, scheme) {
     const profile = session.profile;
     const answers = session.applicationAnswers;
+    const language = session.language || 'en';
     // Format collected answers for prompt/fallback
     const formattedAnswers = Object.entries(answers)
         .map(([key, val]) => {
@@ -19,13 +20,16 @@ async function generateApplicationSummary(session, scheme) {
         .join('\n');
     if (!env_1.config.GROQ_API_KEY) {
         console.log('[ApplicationBuilder] GROQ_API_KEY not set. Generating local summary report.');
-        return generateLocalFallbackSummary(session, scheme, formattedAnswers);
+        return generateLocalFallbackSummary(session, scheme, formattedAnswers, language);
     }
     try {
         const groq = new groq_sdk_1.default({ apiKey: env_1.config.GROQ_API_KEY });
+        const languageInstruction = language === 'hi'
+            ? ' Write your entire response in Hindi (Devanagari script).'
+            : ' Write your entire response in English.';
         const systemPrompt = `
 You are a senior caseworker assistant. Your task is to compile a professional Application Briefing Document for an NGO worker to process a citizen's welfare scheme application.
-Rely strictly on the provided scheme details and applicant answers. Do not make up facts or instructions.
+Rely strictly on the provided scheme details and applicant answers. Do not make up facts or instructions.${languageInstruction}
 `;
         const userPrompt = `
 Generate a professional, NGO-friendly casework summary document for the following application:
@@ -62,48 +66,73 @@ Please write a structured report containing:
             ],
             temperature: 0.1
         });
-        return response.choices[0]?.message?.content || generateLocalFallbackSummary(session, scheme, formattedAnswers);
+        return response.choices[0]?.message?.content || generateLocalFallbackSummary(session, scheme, formattedAnswers, language);
     }
     catch (err) {
         console.error('[ApplicationBuilder] Groq API call failed. Using local fallback:', err);
-        return generateLocalFallbackSummary(session, scheme, formattedAnswers);
+        return generateLocalFallbackSummary(session, scheme, formattedAnswers, language);
     }
 }
-function generateLocalFallbackSummary(session, scheme, formattedAnswers) {
+const LABELS = {
+    en: {
+        title: 'Casework Application Summary Briefing', overview: 'Application Overview Summary',
+        name: 'Applicant Name', target: 'Target Scheme', status: 'Status', statusVal: 'Completed Form Collection',
+        answers: 'Collected Form Answers', eligibility: 'Eligibility Summary',
+        eligNote: 'Determined matching state, age range, social category, and income restrictions successfully.',
+        incomeNote: 'Household annual income of', satisfies: 'satisfies eligibility requirements.',
+        documents: 'Required Document Checklist', docsIntro: 'Please request and verify physical copies of these documents from the citizen:',
+        defaultDocs: '- Aadhaar Card\n- Resident Certificate\n- Family Income Certificate\n- Bank Passbook',
+        missing: 'Missing Information / Discrepancies', noMissing: 'None detected. All required fields for the application FSM have been collected.',
+        nextSteps: 'Recommended Next Steps', instructions: 'Caseworker Instructions',
+        defaultSteps: '1. Access the official state portal or visit the local block office.\n2. Fill out the official form using the collected answers above.\n3. Upload scanned copies of the required document checklist.\n4. Provide the acknowledgment slip number to the citizen for tracking.',
+        note: 'Note: This summary briefing was compiled locally based on user inputs.', na: 'N/A',
+    },
+    hi: {
+        title: 'केसवर्क आवेदन सारांश ब्रीफिंग', overview: 'आवेदन अवलोकन सारांश',
+        name: 'आवेदक का नाम', target: 'लक्षित योजना', status: 'स्थिति', statusVal: 'फॉर्म संग्रह पूर्ण',
+        answers: 'एकत्रित फॉर्म उत्तर', eligibility: 'पात्रता सारांश',
+        eligNote: 'राज्य, आयु सीमा, सामाजिक श्रेणी और आय सीमाओं का सफलतापूर्वक मिलान किया गया।',
+        incomeNote: 'परिवार की वार्षिक आय', satisfies: 'पात्रता आवश्यकताओं को पूरा करती है।',
+        documents: 'आवश्यक दस्तावेज़ सूची', docsIntro: 'कृपया नागरिक से इन दस्तावेज़ों की भौतिक प्रतियां प्राप्त करें और सत्यापित करें:',
+        defaultDocs: '- आधार कार्ड\n- निवास प्रमाण पत्र\n- परिवार आय प्रमाण पत्र\n- बैंक पासबुक',
+        missing: 'लापता जानकारी / विसंगतियां', noMissing: 'कोई नहीं मिला। आवेदन के सभी आवश्यक फ़ील्ड एकत्र किए जा चुके हैं।',
+        nextSteps: 'अनुशंसित अगले चरण', instructions: 'केसवर्कर निर्देश',
+        defaultSteps: '1. आधिकारिक राज्य पोर्टल पर जाएं या स्थानीय ब्लॉक कार्यालय जाएं।\n2. ऊपर एकत्रित उत्तरों का उपयोग करके आधिकारिक फॉर्म भरें।\n3. आवश्यक दस्तावेज़ों की स्कैन की हुई प्रतियां अपलोड करें।\n4. ट्रैकिंग के लिए नागरिक को पावती पर्ची संख्या प्रदान करें।',
+        note: 'नोट: यह सारांश ब्रीफिंग उपयोगकर्ता इनपुट के आधार पर स्थानीय रूप से तैयार की गई है।', na: 'उपलब्ध नहीं',
+    },
+};
+function generateLocalFallbackSummary(session, scheme, formattedAnswers, language) {
     const profile = session.profile;
-    let doc = `# Casework Application Summary Briefing\n\n`;
-    doc += `## 📋 1. Application Overview Summary\n`;
-    doc += `- **Applicant Name:** ${profile.name || 'N/A'}\n`;
-    doc += `- **Target Scheme:** ${scheme.schemeName}\n`;
-    doc += `- **Status:** Completed Form Collection\n\n`;
-    doc += `**Collected Form Answers:**\n${formattedAnswers}\n\n`;
-    doc += `## ⚖️ 2. Eligibility Summary\n`;
-    doc += `- Determined matching state, age range, social category, and income restrictions successfully.\n`;
-    doc += `- Household annual income of ₹${profile.income ? profile.income.toLocaleString('en-IN') : 'N/A'} satisfies eligibility requirements.\n\n`;
-    doc += `## 📂 3. Required Document Checklist\n`;
-    doc += `Please request and verify physical copies of these documents from the citizen:\n`;
+    const L = LABELS[language];
+    let doc = `# ${L.title}\n\n`;
+    doc += `## 📋 1. ${L.overview}\n`;
+    doc += `- **${L.name}:** ${profile.name || L.na}\n`;
+    doc += `- **${L.target}:** ${scheme.schemeName}\n`;
+    doc += `- **${L.status}:** ${L.statusVal}\n\n`;
+    doc += `**${L.answers}:**\n${formattedAnswers}\n\n`;
+    doc += `## ⚖️ 2. ${L.eligibility}\n`;
+    doc += `- ${L.eligNote}\n`;
+    doc += `- ${L.incomeNote} ₹${profile.income ? profile.income.toLocaleString('en-IN') : L.na} ${L.satisfies}\n\n`;
+    doc += `## 📂 3. ${L.documents}\n`;
+    doc += `${L.docsIntro}\n`;
     if (scheme.documents) {
-        // Split lines or render full documents text
         doc += `${scheme.documents}\n`;
     }
     else {
-        doc += `- Aadhaar Card\n- Resident Certificate\n- Family Income Certificate\n- Bank Passbook\n`;
+        doc += `${L.defaultDocs}\n`;
     }
     doc += `\n`;
-    doc += `## ⚠️ 4. Missing Information / Discrepancies\n`;
-    doc += `- None detected. All required fields for the application FSM have been collected.\n\n`;
-    doc += `## 🚀 5. Recommended Next Steps\n`;
-    doc += `**Caseworker Instructions:**\n`;
+    doc += `## ⚠️ 4. ${L.missing}\n`;
+    doc += `- ${L.noMissing}\n\n`;
+    doc += `## 🚀 5. ${L.nextSteps}\n`;
+    doc += `**${L.instructions}:**\n`;
     if (scheme.application) {
         doc += `${scheme.application}\n`;
     }
     else {
-        doc += `1. Access the official state portal or visit the local block office.\n`;
-        doc += `2. Fill out the official form using the collected answers above.\n`;
-        doc += `3. Upload scanned copies of the required document checklist.\n`;
-        doc += `4. Provide the acknowledgment slip number to the citizen for tracking.\n`;
+        doc += `${L.defaultSteps}\n`;
     }
-    doc += `\n\n---\n*Note: This summary briefing was compiled locally based on user inputs.*`;
+    doc += `\n\n---\n*${L.note}*`;
     return doc;
 }
 exports.default = generateApplicationSummary;

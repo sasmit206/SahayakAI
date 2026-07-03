@@ -6,12 +6,12 @@ const eligibilityEngine_1 = require("./eligibilityEngine");
 const hybridRetriever_1 = require("../rag/hybridRetriever");
 const reranker_1 = require("../rag/reranker");
 const recommendationFormatter_1 = require("./recommendationFormatter");
-async function getRecommendations(profile, userQuery, limit = 5) {
+async function getRecommendations(profile, userQuery, limit = 5, lang = 'en') {
     // 1. ELIGIBILITY ENGINE: Filter all schemes in memory to get candidate schemes
     const allSchemes = (0, dbService_1.getAllSchemes)();
     const candidatesWithScores = allSchemes
         .map(scheme => {
-        const eligibility = (0, eligibilityEngine_1.evaluateEligibility)(profile, scheme);
+        const eligibility = (0, eligibilityEngine_1.evaluateEligibility)(profile, scheme, lang);
         return { scheme, eligibility };
     })
         // Filter out strictly ineligible schemes
@@ -62,7 +62,7 @@ async function getRecommendations(profile, userQuery, limit = 5) {
     for (const scheme of top5Schemes) {
         const cand = candidatesWithScores.find(c => c.scheme.schemeId === scheme.schemeId);
         if (cand) {
-            recommendations.push((0, recommendationFormatter_1.formatRecommendation)(scheme, cand.eligibility));
+            recommendations.push(await (0, recommendationFormatter_1.formatRecommendation)(scheme, cand.eligibility, lang));
             rawScored.push({ scheme, eligibility: cand.eligibility });
         }
     }

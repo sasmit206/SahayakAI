@@ -6,7 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { sahayakApi, CitizenProfile, ChatMessage, SchemeRecommendation, FormField } from './services/api';
+import { sahayakApi, CitizenProfile, ChatMessage, SchemeRecommendation, FormField, NextField } from './services/api';
 import { ProfilePanel } from './components/ProfilePanel';
 import { ChatPanel } from './components/ChatPanel';
 import { RecommendationsPanel } from './components/RecommendationsPanel';
@@ -17,7 +17,7 @@ import { motion } from 'framer-motion';
 import { useLang } from './context/LanguageContext';
 
 export const App: React.FC = () => {
-  const { t } = useLang();
+  const { t, language } = useLang();
 
   const [sessionId, setSessionId] = useState<string>('');
   const [profile, setProfile] = useState<CitizenProfile>({
@@ -27,6 +27,7 @@ export const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeMode, setActiveMode] = useState<'chat' | 'apply' | 'completed'>('chat');
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [nextField, setNextField] = useState<NextField | null>(null);
   const [recommendations, setRecommendations] = useState<SchemeRecommendation[]>([]);
   const [report, setReport] = useState<string | null>(null);
 
@@ -44,12 +45,13 @@ export const App: React.FC = () => {
     setIsInitializing(true);
     setInitError(false);
     try {
-      const data = await sahayakApi.createSession();
+      const data = await sahayakApi.createSession(language);
       setSessionId(data.sessionId);
       setProfile(data.profile);
       setMessages(data.messages);
       setActiveMode(data.activeMode);
       setReport(data.recommendationReport);
+      setNextField(data.nextField || null);
     } catch (error) {
       console.error('Failed to initialize session:', error);
       setInitError(true);
@@ -65,11 +67,12 @@ export const App: React.FC = () => {
     const userMsg: ChatMessage = { id: `temp-user-${Date.now()}`, role: 'user', content: msg, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     try {
-      const data = await sahayakApi.sendMessage(sessionId, msg);
+      const data = await sahayakApi.sendMessage(sessionId, msg, language);
       setProfile(data.profile);
       setMessages(data.messages);
       setActiveMode(data.activeMode);
       setMissingFields(data.missingFields || []);
+      setNextField(data.nextField || null);
       setRecommendations(data.recommendations || []);
       setReport(data.report || null);
     } catch (error) {
@@ -84,14 +87,41 @@ export const App: React.FC = () => {
     }
   };
 
+  // Quick-reply selection (buttons/dropdown) — sent as a structured field+value
+  // pair, never as free text, so it can't fail to match on the backend.
+  const handleQuickReply = async (field: string, displayValue: string, canonicalValue: string) => {
+    setIsLoading(true);
+    const userMsg: ChatMessage = { id: `temp-user-${Date.now()}`, role: 'user', content: displayValue, timestamp: Date.now() };
+    setMessages(prev => [...prev, userMsg]);
+    try {
+      const data = await sahayakApi.sendMessage(sessionId, '', language, { field, value: displayValue, canonicalValue });
+      setProfile(data.profile);
+      setMessages(data.messages);
+      setActiveMode(data.activeMode);
+      setMissingFields(data.missingFields || []);
+      setNextField(data.nextField || null);
+      setRecommendations(data.recommendations || []);
+      setReport(data.report || null);
+    } catch (error) {
+      console.error('Failed to submit quick reply:', error);
+      setMessages(prev => [...prev, {
+        id: `temp-error-${Date.now()}`, role: 'assistant',
+        content: '⚠️ Connection error: Failed to reach the server. Please verify the backend is running and try again.',
+        timestamp: Date.now(),
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleReset = async () => {
     setIsLoading(true);
     try {
-      const data = await sahayakApi.resetSession(sessionId);
+      const data = await sahayakApi.resetSession(sessionId, language);
       setProfile(data.profile);
       setMessages(data.messages);
       setActiveMode('chat');
-      setMissingFields([]); setRecommendations([]); setReport(null);
+      setMissingFields([]); setNextField((data as any).nextField || null); setRecommendations([]); setReport(null);
       setSelectedSchemeId(null); setSelectedSchemeName(null);
       setNextQuestion(null); setApplicationAnswers({}); setSummaryReport(null);
     } catch (error) {
@@ -237,7 +267,9 @@ export const App: React.FC = () => {
               <div className="w-[52%] h-full flex-shrink-0">
                 <ChatPanel
                   messages={messages}
+                  nextField={nextField}
                   onSendMessage={handleSendMessage}
+                  onQuickReply={handleQuickReply}
                   isLoading={isLoading}
                   onReset={handleReset}
                 />

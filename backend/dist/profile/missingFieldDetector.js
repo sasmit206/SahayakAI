@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FIELD_LABELS = void 0;
+exports.YES_NO_OPTIONS = exports.CATEGORY_OPTIONS = exports.MARITAL_OPTIONS = exports.GENDER_OPTIONS = exports.INDIAN_STATES = exports.FIELD_LABELS = void 0;
 exports.detectMissingFields = detectMissingFields;
-// User-friendly field display names
+// User-friendly field display names (used for logging/ProfilePanel fallback only —
+// the actual question text shown to the citizen is rendered from i18n by language)
 exports.FIELD_LABELS = {
     name: 'Name',
     age: 'Age',
@@ -13,6 +14,33 @@ exports.FIELD_LABELS = {
     maritalStatus: 'Marital Status',
     category: 'Category (General/OBC/SC/ST)',
     disabilityStatus: 'Disability Status',
+};
+// Canonical option values. These are the exact strings stored on CitizenProfile —
+// the same casing the eligibility engine and the rest of the backend expect.
+// Frontend renders translated labels but always sends one of these back.
+exports.INDIAN_STATES = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+    'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    'Delhi', 'Puducherry', 'Jammu & Kashmir', 'Ladakh', 'Chandigarh', 'Daman and Diu',
+    'Dadra and Nagar Haveli', 'Lakshadweep', 'Andaman and Nicobar'
+];
+exports.GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+exports.MARITAL_OPTIONS = ['Single', 'Married', 'Widowed', 'Divorced'];
+exports.CATEGORY_OPTIONS = ['General', 'OBC', 'SC', 'ST'];
+exports.YES_NO_OPTIONS = ['Yes', 'No'];
+const FIELD_INPUT = {
+    name: { inputType: 'text' },
+    age: { inputType: 'number' },
+    gender: { inputType: 'buttons', options: exports.GENDER_OPTIONS },
+    state: { inputType: 'select', options: exports.INDIAN_STATES },
+    income: { inputType: 'number' },
+    occupation: { inputType: 'text' },
+    maritalStatus: { inputType: 'buttons', options: exports.MARITAL_OPTIONS },
+    category: { inputType: 'buttons', options: exports.CATEGORY_OPTIONS },
+    disabilityStatus: { inputType: 'buttons', options: exports.YES_NO_OPTIONS },
 };
 function detectMissingFields(profile) {
     const missingFields = [];
@@ -33,41 +61,9 @@ function detectMissingFields(profile) {
         }
     }
     if (missingFields.length === 0) {
-        return { missingFields: [], nextQuestion: null };
+        return { missingFields: [], nextField: null };
     }
-    // Generate question for the first missing field
-    const nextField = missingFields[0];
-    let nextQuestion = '';
-    switch (nextField) {
-        case 'name':
-            nextQuestion = "Could you please tell me the citizen's name?";
-            break;
-        case 'age':
-            nextQuestion = "What is the applicant's age?";
-            break;
-        case 'gender':
-            nextQuestion = "What is the applicant's gender? (Male/Female/Other)";
-            break;
-        case 'state':
-            nextQuestion = "Which state is the applicant from?";
-            break;
-        case 'income':
-            nextQuestion = "What is the applicant's annual family income (in ₹)?";
-            break;
-        case 'occupation':
-            nextQuestion = "What is the applicant's occupation? (e.g., Farmer, Student, Construction Worker, etc.)";
-            break;
-        case 'maritalStatus':
-            nextQuestion = "What is the applicant's marital status? (Single/Married/Widowed/Divorced)";
-            break;
-        case 'category':
-            nextQuestion = "Which social category does the applicant belong to? (General, OBC, SC, ST)";
-            break;
-        case 'disabilityStatus':
-            nextQuestion = "Does the applicant have any physical disability? (Yes/No)";
-            break;
-        default:
-            nextQuestion = `Please provide information for: ${exports.FIELD_LABELS[nextField]}.`;
-    }
-    return { missingFields, nextQuestion };
+    const key = missingFields[0];
+    const { inputType, options } = FIELD_INPUT[key];
+    return { missingFields, nextField: { key, inputType, options } };
 }

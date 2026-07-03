@@ -6,8 +6,9 @@ exports.saveSession = saveSession;
 exports.resetSession = resetSession;
 const uuid_1 = require("uuid");
 const profileExtractor_1 = require("../profile/profileExtractor");
+const botStrings_1 = require("../i18n/botStrings");
 const SESSIONS_STORE = new Map();
-function createSession() {
+function createSession(language = 'en') {
     const sessionId = (0, uuid_1.v4)();
     const session = {
         sessionId,
@@ -16,7 +17,7 @@ function createSession() {
             {
                 id: (0, uuid_1.v4)(),
                 role: 'assistant',
-                content: "Hello! I am Sahayak AI, your caseworker assistant. Let's start by understanding the citizen's profile. You can speak naturally, or write a statement like: 'I am Ram, a farmer from Bihar, married and earning ₹90,000 per year.'",
+                content: (0, botStrings_1.botString)('welcome', language),
                 timestamp: Date.now()
             }
         ],
@@ -27,6 +28,7 @@ function createSession() {
         currentFormQuestionIndex: -1,
         formConfig: null,
         recommendationReport: null,
+        language,
         createdAt: Date.now()
     };
     SESSIONS_STORE.set(sessionId, session);
@@ -38,9 +40,9 @@ function getSession(sessionId) {
 function saveSession(session) {
     SESSIONS_STORE.set(session.sessionId, session);
 }
-function resetSession(sessionId) {
+function resetSession(sessionId, language) {
     const oldSession = SESSIONS_STORE.get(sessionId);
-    const newSession = createSession();
+    const newSession = createSession(language ?? oldSession?.language ?? 'en');
     if (oldSession) {
         newSession.sessionId = oldSession.sessionId;
     }

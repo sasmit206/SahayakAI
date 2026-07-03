@@ -12,13 +12,14 @@ const questionFlow_1 = require("../forms/questionFlow");
 const applicationBuilder_1 = require("../forms/applicationBuilder");
 const dbService_1 = require("../services/dbService");
 const uuid_1 = require("uuid");
+const botStrings_1 = require("../i18n/botStrings");
 exports.apiRouter = (0, express_1.Router)();
 function normalizeDisabilityAnswer(message) {
     const normalized = message.trim().replace(/[\s.,!?;:]+$/g, '').replace(/^[\s.,!?;:]+/g, '');
     const lower = normalized.toLowerCase();
-    if (/^(yes|true|1|y)$/i.test(normalized))
+    if (/^(yes|true|1|y|हाँ|हां)$/i.test(normalized))
         return true;
-    if (/^(no|false|0|n|none)$/i.test(normalized))
+    if (/^(no|false|0|n|none|नहीं)$/i.test(normalized))
         return false;
     if (/\bdoes(?:n['’]?t| not) have disability\b/i.test(lower) ||
         /\bdoes(?:n['’]?t| not) have any disability\b/i.test(lower) ||
@@ -39,9 +40,22 @@ function normalizeDisabilityAnswer(message) {
     }
     return null;
 }
+// Builds the nextField payload sent to the frontend, with translated option
+// labels alongside the canonical (untranslated) values the profile stores.
+function buildNextFieldPayload(nextField, lang) {
+    if (!nextField)
+        return null;
+    return {
+        key: nextField.key,
+        inputType: nextField.inputType,
+        options: nextField.options ? (0, botStrings_1.optionLabels)(nextField.options, lang) : undefined,
+    };
+}
 // Create new session
 exports.apiRouter.post('/session', (req, res) => {
-    const session = (0, sessionManager_1.createSession)();
+    const language = (0, botStrings_1.normalizeLang)(req.body?.language);
+    const session = (0, sessionManager_1.createSession)(language);
+    const { nextField } = (0, missingFieldDetector_1.detectMissingFields)(session.profile);
     return res.json({
         sessionId: session.sessionId,
         profile: session.profile,
@@ -49,7 +63,8 @@ exports.apiRouter.post('/session', (req, res) => {
         activeMode: session.activeMode,
         selectedSchemeId: session.selectedSchemeId,
         selectedSchemeName: session.selectedSchemeName,
-        recommendationReport: session.recommendationReport
+        recommendationReport: session.recommendationReport,
+        nextField: buildNextFieldPayload(nextField, language)
     });
 });
 // Reset session
@@ -58,7 +73,9 @@ exports.apiRouter.post('/reset', (req, res) => {
     if (!sessionId) {
         return res.status(400).json({ error: 'sessionId is required' });
     }
-    const session = (0, sessionManager_1.resetSession)(sessionId);
+    const language = req.body?.language ? (0, botStrings_1.normalizeLang)(req.body.language) : undefined;
+    const session = (0, sessionManager_1.resetSession)(sessionId, language);
+    const { nextField } = (0, missingFieldDetector_1.detectMissingFields)(session.profile);
     return res.json({
         sessionId: session.sessionId,
         profile: session.profile,
@@ -66,7 +83,8 @@ exports.apiRouter.post('/reset', (req, res) => {
         activeMode: session.activeMode,
         selectedSchemeId: session.selectedSchemeId,
         selectedSchemeName: session.selectedSchemeName,
-        recommendationReport: session.recommendationReport
+        recommendationReport: session.recommendationReport,
+        nextField: buildNextFieldPayload(nextField, session.language)
     });
 });
 // Get session details
@@ -79,71 +97,91 @@ exports.apiRouter.get('/session/:sessionId', (req, res) => {
     return res.json(session);
 });
 // Chat endpoint ( natural language conversation and profile extraction )
+// Accepts either free-text `message`, or a structured quick-reply
+// `{ quickReply: { field, value } }` for buttons/dropdown selections —
+// the latter bypasses all NLU/regex and can never fail to match.
 exports.apiRouter.post('/chat', async (req, res) => {
-    const { sessionId, message } = req.body;
-    if (!sessionId || !message) {
-        return res.status(400).json({ error: 'sessionId and message are required' });
+    const { sessionId, message, quickReply } = req.body;
+    if (!sessionId || (!message && !quickReply)) {
+        return res.status(400).json({ error: 'sessionId and message (or quickReply) are required' });
     }
     let session = (0, sessionManager_1.getSession)(sessionId);
     if (!session) {
         // Fallback: create session if not found
-        session = (0, sessionManager_1.createSession)();
+        session = (0, sessionManager_1.createSession)(req.body?.language ? (0, botStrings_1.normalizeLang)(req.body.language) : 'en');
         session.sessionId = sessionId;
         (0, sessionManager_1.saveSession)(session);
     }
-    // 1. Add user message to session
-    const userMsg = {
-        id: (0, uuid_1.v4)(),
-        role: 'user',
-        content: message,
-        timestamp: Date.now()
-    };
-    session.messages.push(userMsg);
-    // 2. Extract profile fields
-    console.log(`[API] Extracting profile fields from user statement: "${message}"`);
-    const extracted = await (0, profileExtractor_1.extractProfile)(message, session.profile);
-    session.profile = (0, profileBuilder_1.mergeProfile)(session.profile, extracted);
-    // Hard fallback for the disability question so short yes/no replies do not
-    // get stuck if the extractor misses them.
-    if (session.profile.disabilityStatus === null) {
-        const disabilityAnswer = normalizeDisabilityAnswer(message);
-        if (disabilityAnswer !== null) {
-            session.profile.disabilityStatus = disabilityAnswer;
+    // Allow the citizen to switch language mid-conversation via the UI toggle
+    if (req.body?.language) {
+        session.language = (0, botStrings_1.normalizeLang)(req.body.language);
+    }
+    const lang = session.language || 'en';
+    if (quickReply && quickReply.field && quickReply.value !== undefined) {
+        // Structured selection from a button/dropdown — deterministic, no NLU involved.
+        const fieldKey = quickReply.field;
+        const displayValue = String(quickReply.value);
+        session.messages.push({
+            id: (0, uuid_1.v4)(),
+            role: 'user',
+            content: displayValue,
+            timestamp: Date.now()
+        });
+        session.profile = (0, profileExtractor_1.applyDirectFieldValue)(fieldKey, quickReply.canonicalValue ?? quickReply.value, session.profile);
+    }
+    else {
+        // 1. Add free-text user message to session
+        session.messages.push({
+            id: (0, uuid_1.v4)(),
+            role: 'user',
+            content: message,
+            timestamp: Date.now()
+        });
+        // 2. Extract profile fields via NLU/regex
+        console.log(`[API] Extracting profile fields from user statement: "${message}"`);
+        const extracted = await (0, profileExtractor_1.extractProfile)(message, session.profile);
+        session.profile = (0, profileBuilder_1.mergeProfile)(session.profile, extracted);
+        // Defense-in-depth: if someone typed a yes/no answer instead of tapping the
+        // disability button, still catch it rather than looping.
+        if (session.profile.disabilityStatus === null) {
+            const disabilityAnswer = normalizeDisabilityAnswer(message);
+            if (disabilityAnswer !== null) {
+                session.profile.disabilityStatus = disabilityAnswer;
+            }
         }
     }
     // 3. Detect missing fields
-    const { missingFields, nextQuestion } = (0, missingFieldDetector_1.detectMissingFields)(session.profile);
+    const { missingFields, nextField } = (0, missingFieldDetector_1.detectMissingFields)(session.profile);
     let responseMessage = '';
     let recommendations = [];
     let report = null;
     if (missingFields.length > 0) {
-        // Still missing fields, ask for them
-        responseMessage = nextQuestion || 'Could you please provide more details about the citizen?';
+        // Still missing fields, ask for the next one
+        responseMessage = nextField ? (0, botStrings_1.questionFor)(nextField.key, lang) : (0, botStrings_1.botString)('askMore', lang);
     }
     else {
         // Profile is complete! Trigger recommendation pipeline
         console.log('[API] Profile is complete! Triggering recommendation engine...');
         try {
-            const { recommendations: recs, rawScored } = await (0, recommendationEngine_1.getRecommendations)(session.profile, message);
+            const { recommendations: recs, rawScored } = await (0, recommendationEngine_1.getRecommendations)(session.profile, message || '', 5, lang);
             recommendations = recs;
             // Generate RAG report using Groq
-            report = await (0, generator_1.generateRecommendationsReport)(session.profile, rawScored);
+            report = await (0, generator_1.generateRecommendationsReport)(session.profile, rawScored, lang);
             session.recommendationReport = report;
-            responseMessage = "I have successfully compiled the citizen's profile and identified the top welfare schemes they qualify for. You can review the recommendations and report in the panel on the right.";
+            responseMessage = (0, botStrings_1.botString)('recsReady', lang);
         }
         catch (err) {
             console.error('[API] Failed to generate recommendations:', err);
-            responseMessage = "I have collected the profile details, but encountered an error generating recommendations. Please check your vector database and connection.";
+            responseMessage = (0, botStrings_1.botString)('recsError', lang);
         }
     }
     // 4. Add assistant response to session
-    const assistantMsg = {
+    session.messages.push({
         id: (0, uuid_1.v4)(),
         role: 'assistant',
         content: responseMessage,
         timestamp: Date.now()
-    };
-    session.messages.push(assistantMsg);
+    });
     (0, sessionManager_1.saveSession)(session);
     return res.json({
         sessionId: session.sessionId,
@@ -151,6 +189,7 @@ exports.apiRouter.post('/chat', async (req, res) => {
         messages: session.messages,
         activeMode: session.activeMode,
         missingFields,
+        nextField: buildNextFieldPayload(nextField, lang),
         recommendations,
         report
     });
@@ -243,7 +282,7 @@ exports.apiRouter.post('/submit-answer', async (req, res) => {
             searchText: ''
         };
         summaryReport = await (0, applicationBuilder_1.generateApplicationSummary)(session, scheme);
-        responseText = `Great! I have collected all the application details for **${session.selectedSchemeName}** and compiled a professional Casework Application Summary briefing. You can review and print it in the workspace panel.`;
+        responseText = (0, botStrings_1.botString)('applicationComplete', session.language || 'en', { scheme: session.selectedSchemeName });
         session.messages.push({
             id: (0, uuid_1.v4)(),
             role: 'assistant',

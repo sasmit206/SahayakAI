@@ -5,17 +5,19 @@ import { retrieveHybrid } from '../rag/hybridRetriever';
 import { rerankCandidates } from '../rag/reranker';
 import { formatRecommendation, RecommendationResponse } from './recommendationFormatter';
 import { ScoredScheme } from '../rag/promptBuilder';
+import { Lang } from '../i18n/botStrings';
 
 export async function getRecommendations(
   profile: CitizenProfile,
   userQuery?: string,
-  limit = 5
+  limit = 5,
+  lang: Lang = 'en'
 ): Promise<{ recommendations: RecommendationResponse[]; rawScored: ScoredScheme[] }> {
   // 1. ELIGIBILITY ENGINE: Filter all schemes in memory to get candidate schemes
   const allSchemes = getAllSchemes();
   const candidatesWithScores = allSchemes
     .map(scheme => {
-      const eligibility = evaluateEligibility(profile, scheme);
+      const eligibility = evaluateEligibility(profile, scheme, lang);
       return { scheme, eligibility };
     })
     // Filter out strictly ineligible schemes
@@ -77,13 +79,12 @@ export async function getRecommendations(
   for (const scheme of top5Schemes) {
     const cand = candidatesWithScores.find(c => c.scheme.schemeId === scheme.schemeId);
     if (cand) {
-      recommendations.push(formatRecommendation(scheme, cand.eligibility));
+      recommendations.push(await formatRecommendation(scheme, cand.eligibility, lang));
       rawScored.push({ scheme, eligibility: cand.eligibility });
     }
   }
 
-  // Ensure final recommendations are sorted by eligibility score first, then by reranker ordering
-  // (Or keep the reranker ordering but include the eligibility metrics)
+
   return { recommendations, rawScored };
 }
 export default getRecommendations;

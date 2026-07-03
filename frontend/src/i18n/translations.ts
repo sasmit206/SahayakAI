@@ -68,6 +68,29 @@ export interface Translations {
 
   // Language switcher
   languageLabel: string;
+
+  // Voice (speech-to-text / text-to-speech)
+  micStart: string;
+  micStop: string;
+  micListening: string;
+  micUnsupported: string;
+  speakerOn: string;
+  speakerOff: string;
+  micPermissionDenied: string;
+  playMessage: string;
+  stopPlaying: string;
+
+  // Hindi transliteration + virtual keyboard
+  transliterateHint: string;
+  keyboardToggle: string;
+  keyboardSpace: string;
+  keyboardBackspace: string;
+  keyboardClear: string;
+  keyboardClose: string;
+
+  // Quick-reply chat fields (gender/marital/category/disability/state)
+  selectStatePlaceholder: string;
+  chooseOption: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -135,6 +158,26 @@ export const translations: Record<Language, Translations> = {
     errorRetry: 'Retry connection',
 
     languageLabel: 'Language',
+
+    micStart: 'Speak',
+    micStop: 'Stop',
+    micListening: 'Listening…',
+    micUnsupported: 'Voice input not supported in this browser',
+    speakerOn: 'Voice replies on',
+    speakerOff: 'Voice replies off',
+    micPermissionDenied: 'Microphone access denied. Allow it in browser settings.',
+    playMessage: 'Play',
+    stopPlaying: 'Stop',
+
+    transliterateHint: 'Tab to convert to Hindi script',
+    keyboardToggle: 'Hindi keyboard',
+    keyboardSpace: 'Space',
+    keyboardBackspace: 'Backspace',
+    keyboardClear: 'Clear',
+    keyboardClose: 'Close',
+
+    selectStatePlaceholder: 'Select a state…',
+    chooseOption: 'Choose one:',
   },
 
   hi: {
@@ -201,5 +244,25 @@ export const translations: Record<Language, Translations> = {
     errorRetry: 'पुनः प्रयास करें',
 
     languageLabel: 'भाषा',
+
+    micStart: 'बोलें',
+    micStop: 'रोकें',
+    micListening: 'सुन रहा है…',
+    micUnsupported: 'इस ब्राउज़र में वॉइस इनपुट उपलब्ध नहीं है',
+    speakerOn: 'आवाज़ जवाब चालू',
+    speakerOff: 'आवाज़ जवाब बंद',
+    micPermissionDenied: 'माइक्रोफ़ोन की अनुमति नहीं मिली। ब्राउज़र सेटिंग्स में अनुमति दें।',
+    playMessage: 'सुनें',
+    stopPlaying: 'रोकें',
+
+    transliterateHint: 'हिंदी लिपि में बदलने के लिए Tab दबायें',
+    keyboardToggle: 'हिंदी कीबोर्ड',
+    keyboardSpace: 'स्पेस',
+    keyboardBackspace: 'बैकस्पेस',
+    keyboardClear: 'साफ़ करें',
+    keyboardClose: 'बंद करें',
+
+    selectStatePlaceholder: 'राज्य चुनें…',
+    chooseOption: 'एक विकल्प चुनें:',
   },
 };

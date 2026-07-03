@@ -58,10 +58,11 @@ function extractGeneralRegex(text: string, current: CitizenProfile): CitizenProf
     profile.age = parseInt(ageMatch[1], 10);
   }
 
-  // Gender extraction
-  if (lowerText.includes('female') || lowerText.includes('woman') || lowerText.includes('girl')) {
+  // Gender extraction — word-boundary match only. Plain .includes() would
+  // match "man" inside names like "Aman" or "Raman", silently mis-setting gender.
+  if (/\b(female|woman|women|girl)\b/i.test(lowerText)) {
     profile.gender = 'Female';
-  } else if (lowerText.includes('male') || lowerText.includes('man') || lowerText.includes('boy')) {
+  } else if (/\b(male|man|men|boy)\b/i.test(lowerText)) {
     profile.gender = 'Male';
   } else if (lowerText.includes('other gender') || (lowerText.includes('gender') && lowerText.includes('other'))) {
     profile.gender = 'Other';
@@ -120,12 +121,13 @@ function extractGeneralRegex(text: string, current: CitizenProfile): CitizenProf
     profile.maritalStatus = 'Divorced';
   }
 
-  // Category
-  if (lowerText.includes('obc')) {
+  // Category — word-boundary match only, so words like "Student" or "First"
+  // can never silently set category to ST/SC by accident.
+  if (/\bobc\b/i.test(lowerText)) {
     profile.category = 'OBC';
-  } else if (lowerText.includes('sc') && !lowerText.includes('scheme')) {
+  } else if (/\bsc\b/i.test(lowerText) && !lowerText.includes('scheme')) {
     profile.category = 'SC';
-  } else if (lowerText.includes('st') && !lowerText.includes('student')) {
+  } else if (/\bst\b/i.test(lowerText) && !lowerText.includes('student')) {
     profile.category = 'ST';
   } else if (lowerText.includes('general') || lowerText.includes('open category')) {
     profile.category = 'General';
@@ -312,6 +314,39 @@ function extractProfileRegex(text: string, current: CitizenProfile): CitizenProf
     }
   }
 
+  return profile;
+}
+
+// Applies a quick-reply (button/dropdown) selection directly onto the profile,
+// with zero NLU/regex involved. Used when the frontend sends a structured
+// selection instead of free text — this is what makes gender/marital/category/
+// disability/state answers immune to the "doesn't match any keyword" loop.
+export function applyDirectFieldValue(
+  field: keyof CitizenProfile,
+  value: string,
+  currentProfile: CitizenProfile
+): CitizenProfile {
+  const profile = { ...currentProfile };
+  switch (field) {
+    case 'gender':
+      if (['Male', 'Female', 'Other'].includes(value)) profile.gender = value as any;
+      break;
+    case 'maritalStatus':
+      if (['Single', 'Married', 'Widowed', 'Divorced'].includes(value)) profile.maritalStatus = value as any;
+      break;
+    case 'category':
+      if (['General', 'OBC', 'SC', 'ST'].includes(value)) profile.category = value;
+      break;
+    case 'disabilityStatus':
+      profile.disabilityStatus = value === 'Yes';
+      break;
+    case 'state':
+      profile.state = value;
+      break;
+    default:
+      // Not a quick-reply field; ignore.
+      break;
+  }
   return profile;
 }
 

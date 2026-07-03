@@ -55,11 +55,30 @@ This is a production-grade portfolio application demonstrating high-quality soft
 
 ---
 
+## 🧭 Quick-Reply Fields (No More Loops)
+
+Gender, marital status, social category, disability status, and state are **determinate fields** — a fixed, known set of valid answers. These are no longer collected via free text in chat. Instead the bot renders buttons (gender/marital/category/disability) or a dropdown (state, 37 options) directly under its question, and the selection is sent to the backend as a structured `{ field, value }` pair that bypasses all NLU/regex matching entirely. This is what makes them immune to the "bot keeps asking the same question" loop — there is no keyword the answer needs to match, because there's no free text to parse.
+
+Name, age, income, and occupation remain free text, since they're open-ended by nature.
+
+---
+
+## 🗣️ Voice & Hindi Typing
+
+*   **Speech-to-text & text-to-speech:** Browser-native **Web Speech API** (`SpeechRecognition` + `SpeechSynthesis`) — free forever, zero npm dependency, zero API key. Click the mic to speak; toggle the speaker icon to have replies read aloud automatically, or hover any bot message and tap its play button to hear that one message on demand. Recognition/synthesis language follows the active EN/हिंदी toggle.
+*   **Hindi transliteration while typing:** In हिंदी mode, type phonetically in Latin letters (e.g. `mera naam ram hai`) and a live Devanagari suggestion appears above the input — press **Tab** or tap it to accept, or ignore it and send the Latin text as-is. Built on `@indic-transliteration/sanscript`, runs entirely client-side. Numbers are left untouched so age/income parsing keeps working.
+*   **On-screen virtual Hindi keyboard:** Tap the keyboard icon next to the input (हिंदी mode only) for a clickable Devanagari keyboard — vowels, consonants, matras, and digits. Works alongside transliteration; use whichever is faster for a given word. If the device already has a native Hindi keyboard/IME, that input passes through untouched.
+*   **Bilingual chat replies:** Bot questions, the recommendation report, and the application summary all render in the active language. **With `GROQ_API_KEY` set**, the LLM genuinely understands and replies in Hindi/Hinglish for the free-text fields (name, occupation, etc.) and the Groq-generated reports. Without a key, the regex-fallback extraction is English-pattern based for free text — though the quick-reply fields above are unaffected either way, since they never go through regex at all.
+
+---
+
 ## 🚀 Setup & Execution Guide
 
 ### Prerequisites
 *   **Node.js** v18+ (tested on v22)
 *   **Python** 3.10+ (for ChromaDB server)
+*   **Chrome, Edge, or Safari** recommended for voice features (mic input / spoken replies) — these use the browser's built-in Web Speech API, which Firefox keeps disabled by default. Everything else (quick-reply buttons, transliteration, virtual keyboard) works in any modern browser.
+*   This update adds `@indic-transliteration/sanscript` as a new frontend dependency (already in `package-lock.json`). If you use `bun`, run `bun install` once to refresh `bun.lock` — it wasn't regenerated as part of this change.
 
 ---
 

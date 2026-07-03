@@ -50,6 +50,19 @@ export interface FormField {
   placeholder?: string;
 }
 
+// Metadata describing how the chat should collect the next profile field —
+// 'buttons'/'select' fields are rendered as quick-replies, never free text,
+// which is what makes them immune to NLU mismatches.
+export interface NextFieldOption {
+  value: string;  // canonical value stored on the profile (untranslated)
+  label: string;  // translated display label
+}
+export interface NextField {
+  key: string;
+  inputType: 'text' | 'number' | 'select' | 'buttons';
+  options?: NextFieldOption[];
+}
+
 export interface SessionResponse {
   sessionId: string;
   profile: CitizenProfile;
@@ -58,6 +71,7 @@ export interface SessionResponse {
   selectedSchemeId: string | null;
   selectedSchemeName: string | null;
   recommendationReport: string | null;
+  nextField: NextField | null;
 }
 
 export interface ChatResponse {
@@ -66,6 +80,7 @@ export interface ChatResponse {
   messages: ChatMessage[];
   activeMode: 'chat' | 'apply' | 'completed';
   missingFields: string[];
+  nextField: NextField | null;
   recommendations: SchemeRecommendation[];
   report: string | null;
 }
@@ -89,16 +104,21 @@ export interface AnswerResponse {
 }
 
 export const sahayakApi = {
-  createSession: async (): Promise<SessionResponse> => {
-    const res = await client.post('/api/session');
+  createSession: async (language?: string): Promise<SessionResponse> => {
+    const res = await client.post('/api/session', { language });
     return res.data;
   },
-  resetSession: async (sessionId: string): Promise<ChatResponse> => {
-    const res = await client.post('/api/reset', { sessionId });
+  resetSession: async (sessionId: string, language?: string): Promise<SessionResponse> => {
+    const res = await client.post('/api/reset', { sessionId, language });
     return res.data;
   },
-  sendMessage: async (sessionId: string, message: string): Promise<ChatResponse> => {
-    const res = await client.post('/api/chat', { sessionId, message });
+  sendMessage: async (
+    sessionId: string,
+    message: string,
+    language?: string,
+    quickReply?: { field: string; value: string; canonicalValue?: string }
+  ): Promise<ChatResponse> => {
+    const res = await client.post('/api/chat', { sessionId, message, language, quickReply });
     return res.data;
   },
   selectScheme: async (
