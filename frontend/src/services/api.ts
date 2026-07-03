@@ -38,6 +38,8 @@ export interface SchemeRecommendation {
   documents: string;
   application: string;
   score: number;
+  maxScore: number;
+  matchPercentage: number;
   isEligible: boolean;
   reasons: string[];
 }

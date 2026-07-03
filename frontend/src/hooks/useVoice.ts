@@ -4,8 +4,8 @@ import { Language } from '../i18n/translations';
 // Browser-native Web Speech API — free, no API key, no backend, no expiry.
 // Chrome/Edge/Safari support it; we feature-detect and degrade gracefully.
 
-const RECOGNITION_LANG: Record<Language, string> = { en: 'en-IN', hi: 'hi-IN' };
-const SYNTH_LANG: Record<Language, string> = { en: 'en-IN', hi: 'hi-IN' };
+const RECOGNITION_LANG: Record<Language, string> = { en: 'en-IN', hi: 'hi-IN', kn: 'kn-IN' };
+const SYNTH_LANG: Record<Language, string> = { en: 'en-IN', hi: 'hi-IN', kn: 'kn-IN' };
 
 function getRecognitionCtor(): any {
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;

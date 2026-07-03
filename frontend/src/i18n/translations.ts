@@ -4,7 +4,7 @@
  * All UI labels must be present in every language entry.
  */
 
-export type Language = 'en' | 'hi';
+export type Language = 'en' | 'hi' | 'kn';
 
 export interface Translations {
   // Header
@@ -37,6 +37,13 @@ export interface Translations {
   recEmpty: string;
   recApply: string;
   recApplying: string;
+  recReportTab: string;
+  recHybridBadge: string;
+  recRankLabel: string;
+  recScoreLabel: string;
+  recMatchLabel: string;
+  recEligibilityMatchLabel: string;
+  recNoRecsYetTitle: string;
 
   // Application Flow Panel
   appFlowBack: string;
@@ -80,7 +87,7 @@ export interface Translations {
   playMessage: string;
   stopPlaying: string;
 
-  // Hindi transliteration + virtual keyboard
+  // Transliteration + virtual keyboard (Hindi/Kannada)
   transliterateHint: string;
   keyboardToggle: string;
   keyboardSpace: string;
@@ -131,6 +138,13 @@ export const translations: Record<Language, Translations> = {
     recEmpty: 'Recommendations will appear here once enough profile data is collected.',
     recApply: 'Apply',
     recApplying: 'Opening…',
+    recReportTab: 'Report',
+    recHybridBadge: 'Hybrid retrieval',
+    recRankLabel: 'Rank',
+    recScoreLabel: 'Score',
+    recMatchLabel: 'Match',
+    recEligibilityMatchLabel: 'Eligibility match',
+    recNoRecsYetTitle: 'No recommendations yet',
 
     appFlowBack: 'Back',
     appFlowSubtitle: 'Deterministic application flow',
@@ -217,6 +231,13 @@ export const translations: Record<Language, Translations> = {
     recEmpty: 'पर्याप्त प्रोफ़ाइल डेटा मिलने के बाद यहाँ सुझाव दिखेंगे।',
     recApply: 'आवेदन करें',
     recApplying: 'खुल रहा है…',
+    recReportTab: 'रिपोर्ट',
+    recHybridBadge: 'हाइब्रिड रिट्रीवल',
+    recRankLabel: 'क्रम',
+    recScoreLabel: 'स्कोर',
+    recMatchLabel: 'मिलान',
+    recEligibilityMatchLabel: 'पात्रता मिलान',
+    recNoRecsYetTitle: 'अभी तक कोई सुझाव नहीं',
 
     appFlowBack: 'वापस',
     appFlowSubtitle: 'नियतात्मक आवेदन प्रक्रिया',
@@ -264,5 +285,98 @@ export const translations: Record<Language, Translations> = {
 
     selectStatePlaceholder: 'राज्य चुनें…',
     chooseOption: 'एक विकल्प चुनें:',
+  },
+
+  kn: {
+    appName: 'ಸಹಾಯಕ್ AI',
+    appSubtitle: 'ಮೌಲ್ಯಮಾಪನ ಕಾರ್ಯಸ್ಥಳ',
+    backLabel: 'ಹಿಂದೆ',
+    versionLabel: 'v1 · CSV ಸೂಚ್ಯಂಕ',
+    engineLabel: 'ನಿಶ್ಚಿತ ಎಂಜಿನ್',
+
+    chatTitle: 'ಕೇಸ್‌ವರ್ಕ್ ಸಹಾಯಕ',
+    chatSubtitle: 'ಸಹಜ ಭಾಷೆಯ ಸಂಭಾಷಣೆ',
+    chatEmptyTitle: 'ಪ್ರಾರಂಭಿಸಲು ಸಿದ್ಧ',
+    chatEmptyBody: 'ನಾಗರಿಕರ ಮಾಹಿತಿಯನ್ನು ನಿಮ್ಮ ಸ್ವಂತ ಪದಗಳಲ್ಲಿ ಬರೆಯಿರಿ. ಸಹಾಯಕ್ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಪ್ರೊಫೈಲ್ ಸಿದ್ಧಪಡಿಸುತ್ತದೆ.',
+    chatPlaceholder: 'ನಾಗರಿಕರ ವಿವರವನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ…',
+    resetLabel: 'ಮರುಹೊಂದಿಸಿ',
+
+    profileTitle: 'ನಾಗರಿಕ ಪ್ರೊಫೈಲ್',
+    profileSubtitle: 'ಕೇಸ್‌ವರ್ಕರ್ ಇನ್‌ಟೇಕ್',
+    profileMissingFields: (n) => `${n} ಕ್ಷೇತ್ರ${n === 1 ? '' : 'ಗಳು'} ಇನ್ನೂ ಅಗತ್ಯವಿದೆ`,
+    profileNotCaptured: 'ಇನ್ನೂ ಸಿಕ್ಕಿಲ್ಲ',
+    profileRequired: 'ಅಗತ್ಯ',
+    profileCaptured: 'ಪಡೆಯಲಾಗಿದೆ',
+    profileFields: {
+      name: 'ಪೂರ್ಣ ಹೆಸರು',
+      age: 'ವಯಸ್ಸು',
+      gender: 'ಲಿಂಗ',
+      state: 'ವಾಸಿಸುವ ರಾಜ್ಯ',
+      income: 'ವಾರ್ಷಿಕ ಆದಾಯ',
+      occupation: 'ಉದ್ಯೋಗ',
+      maritalStatus: 'ವೈವಾಹಿಕ ಸ್ಥಿತಿ',
+      category: 'ಸಾಮಾಜಿಕ ವರ್ಗ',
+      disabilityStatus: 'ಅಂಗವೈಕಲ್ಯ',
+    },
+
+    recTitle: 'ಯೋಜನೆ ಶಿಫಾರಸುಗಳು',
+    recSubtitle: 'ನಾಗರಿಕ ಪ್ರೊಫೈಲ್‌ಗೆ ಹೊಂದಿಸಲಾಗಿದೆ',
+    recEmpty: 'ಸಾಕಷ್ಟು ಪ್ರೊಫೈಲ್ ಡೇಟಾ ಸಂಗ್ರಹವಾದ ನಂತರ ಶಿಫಾರಸುಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.',
+    recApply: 'ಅರ್ಜಿ ಸಲ್ಲಿಸಿ',
+    recApplying: 'ತೆರೆಯುತ್ತಿದೆ…',
+    recReportTab: 'ವರದಿ',
+    recHybridBadge: 'ಹೈಬ್ರಿಡ್ ರಿಟ್ರೀವಲ್',
+    recRankLabel: 'ಶ್ರೇಣಿ',
+    recScoreLabel: 'ಸ್ಕೋರ್',
+    recMatchLabel: 'ಹೊಂದಾಣಿಕೆ',
+    recEligibilityMatchLabel: 'ಅರ್ಹತಾ ಹೊಂದಾಣಿಕೆ',
+    recNoRecsYetTitle: 'ಇನ್ನೂ ಯಾವುದೇ ಶಿಫಾರಸುಗಳಿಲ್ಲ',
+
+    appFlowBack: 'ಹಿಂದೆ',
+    appFlowSubtitle: 'ನಿಶ್ಚಿತ ಅರ್ಜಿ ಪ್ರಕ್ರಿಯೆ',
+    appFlowSummarySubtitle: 'ಅರ್ಜಿ ಸಾರಾಂಶ',
+    appFlowComplete: 'ಅರ್ಜಿ ಪೂರ್ಣಗೊಂಡಿದೆ',
+    appFlowCompleteSubtitle: 'ಸಾರಾಂಶ ವರದಿ ಪರಿಶೀಲನೆಗೆ ಸಿದ್ಧವಾಗಿದೆ',
+    appFlowPreparing: 'ಮುಂದಿನ ಪ್ರಶ್ನೆ ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ…',
+    appFlowAnswered: (n) => `${n} ಉತ್ತರಿಸಲಾಗಿದೆ`,
+    appFlowContinue: 'ಮುಂದುವರಿಸಿ',
+    appFlowPrint: 'ಮುದ್ರಿಸಿ',
+    appFlowAnswersLabel: 'ಪಡೆದ ಉತ್ತರಗಳು',
+
+    validAadhaar: 'ಮಾನ್ಯ ಆಧಾರ್ ಸಂಖ್ಯೆ',
+    invalidAadhaar: 'ಆಧಾರ್ ಸಂಖ್ಯೆಯಲ್ಲಿ ನಿಖರವಾಗಿ 12 ಅಂಕೆಗಳಿರಬೇಕು',
+    validPhone: 'ಮಾನ್ಯ ಫೋನ್ ಸಂಖ್ಯೆ',
+    invalidPhone: 'ಫೋನ್ ಸಂಖ್ಯೆಯಲ್ಲಿ ನಿಖರವಾಗಿ 10 ಅಂಕೆಗಳಿರಬೇಕು',
+    fieldRequired: 'ಈ ಕ್ಷೇತ್ರ ಅಗತ್ಯವಿದೆ',
+    invalidNumber: 'ದಯವಿಟ್ಟು ಮಾನ್ಯ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ',
+    selectOption: 'ದಯವಿಟ್ಟು ಒಂದು ಆಯ್ಕೆಯನ್ನು ಆರಿಸಿ',
+
+    initTitle: 'ಸಹಾಯಕ್ AI ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ',
+    initSubtitle: 'ಸರ್ವರ್‌ಗೆ ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ ಮತ್ತು ಡೇಟಾಬೇಸ್ ಸೂಚ್ಯಂಕವನ್ನು ಕ್ಯಾಶ್ ಮಾಡಲಾಗುತ್ತಿದೆ',
+    errorTitle: 'ಸಂಪರ್ಕ ವಿಫಲತೆ',
+    errorBody: 'ಸಹಾಯಕ್ AI ಬ್ಯಾಕ್‌ಎಂಡ್ ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಬ್ಯಾಕ್‌ಎಂಡ್ ಪೋರ್ಟ್ 5001 ರಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿದೆ ಎಂದು ಖಚಿತಪಡಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+    errorRetry: 'ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ',
+
+    languageLabel: 'ಭಾಷೆ',
+
+    micStart: 'ಮಾತನಾಡಿ',
+    micStop: 'ನಿಲ್ಲಿಸಿ',
+    micListening: 'ಕೇಳುತ್ತಿದೆ…',
+    micUnsupported: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಬೆಂಬಲಿತವಾಗಿಲ್ಲ',
+    speakerOn: 'ಧ್ವನಿ ಉತ್ತರಗಳು ಆನ್',
+    speakerOff: 'ಧ್ವನಿ ಉತ್ತರಗಳು ಆಫ್',
+    micPermissionDenied: 'ಮೈಕ್ರೋಫೋನ್ ಪ್ರವೇಶ ನಿರಾಕರಿಸಲಾಗಿದೆ. ಬ್ರೌಸರ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅನುಮತಿಸಿ.',
+    playMessage: 'ಪ್ಲೇ ಮಾಡಿ',
+    stopPlaying: 'ನಿಲ್ಲಿಸಿ',
+
+    transliterateHint: 'ಕನ್ನಡ ಲಿಪಿಗೆ ಪರಿವರ್ತಿಸಲು Tab ಒತ್ತಿ',
+    keyboardToggle: 'ಕನ್ನಡ ಕೀಬೋರ್ಡ್',
+    keyboardSpace: 'ಸ್ಪೇಸ್',
+    keyboardBackspace: 'ಬ್ಯಾಕ್‌ಸ್ಪೇಸ್',
+    keyboardClear: 'ಅಳಿಸಿ',
+    keyboardClose: 'ಮುಚ್ಚಿ',
+
+    selectStatePlaceholder: 'ರಾಜ್ಯ ಆಯ್ಕೆಮಾಡಿ…',
+    chooseOption: 'ಒಂದು ಆಯ್ಕೆಯನ್ನು ಆರಿಸಿ:',
   },
 };

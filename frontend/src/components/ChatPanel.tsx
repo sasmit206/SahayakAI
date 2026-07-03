@@ -3,7 +3,7 @@
  * - Quick-reply buttons/dropdown for determinate fields (gender, marital
  *   status, category, disability, state) — no more free-text loop risk.
  * - Voice in (mic) / voice out (auto-speak + per-message play) via Web Speech API.
- * - Hindi: live Tab-to-convert transliteration + on-screen virtual keyboard.
+ * - Hindi & Kannada: live Tab-to-convert transliteration + on-screen virtual keyboard.
  */
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatMessage, NextField } from '../services/api';
@@ -14,8 +14,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../context/LanguageContext';
 import { useVoiceInput, useVoiceOutput } from '../hooks/useVoice';
-import { transliterateToDevanagari, looksLikeLatinScript } from '../utils/transliterate';
-import { HindiKeyboard } from './HindiKeyboard';
+import { transliterateToScript, looksLikeLatinScript, supportsTransliteration } from '../utils/transliterate';
+import { VirtualKeyboard, supportsVirtualKeyboard } from './VirtualKeyboard';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -66,10 +66,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   }, [messages, voiceOut.enabled, language]);
 
-  // Live romanized-Hindi -> Devanagari suggestion (Hindi mode only).
+  // Live romanized-text -> target script suggestion (Hindi/Kannada mode only).
   const transliteration = useMemo(() => {
-    if (language !== 'hi' || !input.trim() || !looksLikeLatinScript(input)) return '';
-    return transliterateToDevanagari(input);
+    if (!supportsTransliteration(language) || !input.trim() || !looksLikeLatinScript(input)) return '';
+    return transliterateToScript(input, language);
   }, [language, input]);
 
   const acceptTransliteration = () => { if (transliteration) setInput(transliteration); };
@@ -239,8 +239,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
       <form onSubmit={handleSubmit} className="p-4 border-t border-white/[0.06] bg-ink-900">
         <AnimatePresence>
-          {showKeyboard && language === 'hi' && (
-            <HindiKeyboard
+          {showKeyboard && supportsVirtualKeyboard(language) && (
+            <VirtualKeyboard
+              language={language}
               onKey={handleKeyboardKey}
               onBackspace={handleKeyboardBackspace}
               onSpace={handleKeyboardSpace}
@@ -305,7 +306,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             </motion.button>
           </div>
 
-          {language === 'hi' && (
+          {supportsVirtualKeyboard(language) && (
             <motion.button
               type="button"
               onClick={() => setShowKeyboard((v) => !v)}

@@ -39,11 +39,11 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
             active={activeTab === 'report'}
             onClick={() => setActiveTab('report')}
             icon={<FileText className="h-3.5 w-3.5" strokeWidth={1.6} />}
-            label="Report"
+            label={t.recReportTab}
             disabled={!report}
           />
         </div>
-        <span className="pill-neutral mb-3 font-mono">Hybrid retrieval</span>
+        <span className="pill-neutral mb-3 font-mono">{t.recHybridBadge}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5">
@@ -64,19 +64,24 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                     <div className="flex items-start gap-5">
                       {/* Rank rail */}
                       <div className="shrink-0 text-center w-12">
-                        <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">Rank</div>
+                        <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">{t.recRankLabel}</div>
                         <div className="mt-1 font-display text-2xl font-semibold text-white">
                           {String(idx + 1).padStart(2, '0')}
                         </div>
                         <div className="mt-2 pt-2 border-t border-white/[0.06]">
-                          <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">Score</div>
-                          <div className="text-[13px] text-accent font-semibold mt-0.5">+{rec.score}</div>
+                          <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">{t.recMatchLabel}</div>
+                          <div className="text-[13px] text-accent font-semibold mt-0.5">{rec.matchPercentage}%</div>
+                        </div>
+                        <div className="mt-1.5">
+                          <div className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.1em]">{t.recScoreLabel}</div>
+                          <div className="text-[12px] text-ink-300 font-medium mt-0.5">+{rec.score}</div>
                         </div>
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="pill-accent">{rec.level}</span>
+                          <span className="pill-success font-mono">{rec.matchPercentage}% {t.recMatchLabel}</span>
                           {rec.category.slice(0, 2).map((c, i) => (
                             <span key={i} className="pill-neutral">{c}</span>
                           ))}
@@ -93,7 +98,7 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                         {rec.reasons.length > 0 && (
                           <div className="mt-4 space-y-1.5">
                             <p className="text-[10.5px] uppercase tracking-[0.1em] text-ink-400 font-medium">
-                              Eligibility match
+                              {t.recEligibilityMatchLabel}
                             </p>
                             {rec.reasons.slice(0, 3).map((r, i) => (
                               <div key={i} className="flex items-start gap-2 text-[12.5px] text-ink-300">
@@ -174,10 +179,11 @@ function TabButton({ active, onClick, icon, label, badge, disabled }: {
 }
 
 function EmptyState({ message }: { message: string }) {
+  const { t } = useLang();
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-10 surface-muted border-dashed">
       <ClipboardList className="h-7 w-7 text-ink-500 mb-3" strokeWidth={1.5} />
-      <p className="text-[14px] text-white font-medium">No recommendations yet</p>
+      <p className="text-[14px] text-white font-medium">{t.recNoRecsYetTitle}</p>
       <p className="mt-1.5 text-[12.5px] text-ink-400 max-w-xs leading-relaxed">{message}</p>
     </div>
   );

@@ -11,6 +11,7 @@ import { Language } from '../i18n/translations';
 const LANGS: { code: Language; label: string; native: string }[] = [
   { code: 'en', label: 'English', native: 'EN' },
   { code: 'hi', label: 'हिंदी',   native: 'HI' },
+  { code: 'kn', label: 'ಕನ್ನಡ',   native: 'KN' },
 ];
 
 export const LanguageSwitcher: React.FC = () => {
