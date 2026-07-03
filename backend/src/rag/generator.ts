@@ -23,6 +23,8 @@ export async function generateRecommendationsReport(
     const prompt = buildRecommendationPrompt(profile, scoredSchemes);
     const languageInstruction = language === 'hi'
       ? ' Write your entire response in Hindi (Devanagari script).'
+      : language === 'kn'
+      ? ' Write your entire response in Kannada (Kannada script).'
       : ' Write your entire response in English.';
 
     console.log('[Generator] Calling Groq API for report generation...');
@@ -66,6 +68,16 @@ const LABELS: Record<Lang, Record<string, string>> = {
     documents: 'आवश्यक दस्तावेज़', apply: 'आवेदन कैसे करें', noBenefit: 'कोई लाभ विवरण सूचीबद्ध नहीं है।',
     noEligibility: 'कोई पात्रता मानदंड सूचीबद्ध नहीं है।', noDocuments: 'कोई दस्तावेज़ सूचीबद्ध नहीं है।', noApply: 'कोई आवेदन चरण सूचीबद्ध नहीं है।',
     note: 'नोट: यह रिपोर्ट कल्याण डेटाबेस से निश्चित रूप से तैयार की गई है।',
+  },
+  kn: {
+    title: 'ಸರ್ಕಾರಿ ಕಲ್ಯಾಣ ಯೋಜನೆ ಶಿಫಾರಸು ವರದಿ',
+    applicant: 'ಅರ್ಜಿದಾರರ ಹೆಸರು', state: 'ರಾಜ್ಯ', category: 'ವರ್ಗ', income: 'ವಾರ್ಷಿಕ ಕುಟುಂಬ ಆದಾಯ',
+    occupation: 'ಉದ್ಯೋಗ', disability: 'ಅಂಗವೈಕಲ್ಯ ಸ್ಥಿತಿ', yes: 'ಹೌದು', no: 'ಇಲ್ಲ', na: 'ಲಭ್ಯವಿಲ್ಲ',
+    intro: 'ನಿಶ್ಚಿತ ಅರ್ಹತಾ ಹೊಂದಾಣಿಕೆಯ ಆಧಾರದ ಮೇಲೆ, ನಾವು', relevant: 'ಸಂಬಂಧಿತ ಯೋಜನೆಗಳನ್ನು ಗುರುತಿಸಿದ್ದೇವೆ:',
+    rationale: 'ಶಿಫಾರಸಿನ ಕಾರಣ', benefits: 'ಪ್ರಮುಖ ಪ್ರಯೋಜನಗಳು', eligibility: 'ಅರ್ಹತಾ ಮಾನದಂಡ',
+    documents: 'ಅಗತ್ಯ ದಾಖಲೆಗಳು', apply: 'ಅರ್ಜಿ ಸಲ್ಲಿಸುವುದು ಹೇಗೆ', noBenefit: 'ಯಾವುದೇ ಪ್ರಯೋಜನ ವಿವರಗಳು ಪಟ್ಟಿಯಾಗಿಲ್ಲ.',
+    noEligibility: 'ಯಾವುದೇ ಅರ್ಹತಾ ಮಾನದಂಡ ಪಟ್ಟಿಯಾಗಿಲ್ಲ.', noDocuments: 'ಯಾವುದೇ ದಾಖಲೆಗಳು ಪಟ್ಟಿಯಾಗಿಲ್ಲ.', noApply: 'ಯಾವುದೇ ಅರ್ಜಿ ಹಂತಗಳು ಪಟ್ಟಿಯಾಗಿಲ್ಲ.',
+    note: 'ಗಮನಿಸಿ: ಈ ವರದಿಯನ್ನು ಕಲ್ಯಾಣ ಡೇಟಾಬೇಸ್‌ನಿಂದ ನಿಶ್ಚಿತವಾಗಿ ಸಿದ್ಧಪಡಿಸಲಾಗಿದೆ.',
   },
 };
 

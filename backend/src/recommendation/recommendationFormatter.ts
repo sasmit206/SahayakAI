@@ -1,7 +1,7 @@
 import { SchemeDocument } from '../ingestion/normalizer';
 import { EligibilityResult } from './scoringRules';
 import { Lang } from '../i18n/botStrings';
-import { translateSchemeToHindi } from '../i18n/schemeTranslator';
+import { translateScheme } from '../i18n/schemeTranslator';
 
 export interface RecommendationResponse {
   schemeId: string;
@@ -15,6 +15,8 @@ export interface RecommendationResponse {
   documents: string;
   application: string;
   score: number;
+  maxScore: number;
+  matchPercentage: number;
   isEligible: boolean;
   reasons: string[];
 }
@@ -25,20 +27,22 @@ export async function formatRecommendation(
   eligibility: EligibilityResult,
   lang: Lang = 'en'
 ): Promise<RecommendationResponse> {
-  if (lang === 'hi') {
-    const hi = await translateSchemeToHindi(scheme);
+  if (lang === 'hi' || lang === 'kn') {
+    const translated = await translateScheme(scheme, lang);
     return {
       schemeId: scheme.schemeId,
-      schemeName: hi.schemeName,
+      schemeName: translated.schemeName,
       slug: scheme.slug,
       level: scheme.level,
-      category: hi.category,
-      tags: hi.tags,
-      benefits: hi.benefits,
-      eligibilityText: hi.eligibilityText,
-      documents: hi.documents,
-      application: hi.application,
+      category: translated.category,
+      tags: translated.tags,
+      benefits: translated.benefits,
+      eligibilityText: translated.eligibilityText,
+      documents: translated.documents,
+      application: translated.application,
       score: eligibility.score,
+      maxScore: eligibility.maxScore,
+      matchPercentage: eligibility.matchPercentage,
       isEligible: eligibility.isEligible,
       reasons: eligibility.reasons,
     };
@@ -56,6 +60,8 @@ export async function formatRecommendation(
     documents: scheme.documents,
     application: scheme.application,
     score: eligibility.score,
+    maxScore: eligibility.maxScore,
+    matchPercentage: eligibility.matchPercentage,
     isEligible: eligibility.isEligible,
     reasons: eligibility.reasons,
   };

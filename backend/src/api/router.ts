@@ -9,7 +9,7 @@ import { startApplication, getCurrentQuestion, submitAnswerAndProgress } from '.
 import { generateApplicationSummary } from '../forms/applicationBuilder';
 import { getAllSchemes } from '../services/dbService';
 import { v4 as uuidv4 } from 'uuid';
-import { normalizeLang, questionFor, botString, optionLabels } from '../i18n/botStrings';
+import { normalizeLang, questionFor, botString, optionLabels, Lang } from '../i18n/botStrings';
 
 export const apiRouter = Router();
 
@@ -17,8 +17,8 @@ function normalizeDisabilityAnswer(message: string): boolean | null {
   const normalized = message.trim().replace(/[\s.,!?;:]+$/g, '').replace(/^[\s.,!?;:]+/g, '');
   const lower = normalized.toLowerCase();
 
-  if (/^(yes|true|1|y|हाँ|हां)$/i.test(normalized)) return true;
-  if (/^(no|false|0|n|none|नहीं)$/i.test(normalized)) return false;
+  if (/^(yes|true|1|y|हाँ|हां|ಹೌದು)$/i.test(normalized)) return true;
+  if (/^(no|false|0|n|none|नहीं|ಇಲ್ಲ)$/i.test(normalized)) return false;
 
   if (
     /\bdoes(?:n['’]?t| not) have disability\b/i.test(lower) ||
@@ -48,7 +48,7 @@ function normalizeDisabilityAnswer(message: string): boolean | null {
 
 // Builds the nextField payload sent to the frontend, with translated option
 // labels alongside the canonical (untranslated) values the profile stores.
-function buildNextFieldPayload(nextField: ReturnType<typeof detectMissingFields>['nextField'], lang: 'en' | 'hi') {
+function buildNextFieldPayload(nextField: ReturnType<typeof detectMissingFields>['nextField'], lang: Lang) {
   if (!nextField) return null;
   return {
     key: nextField.key,

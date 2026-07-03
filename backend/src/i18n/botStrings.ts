@@ -1,9 +1,11 @@
 import { CitizenProfile } from '../profile/profileExtractor';
 
-export type Lang = 'en' | 'hi';
+export type Lang = 'en' | 'hi' | 'kn';
 
 export function normalizeLang(input: unknown): Lang {
-  return input === 'hi' ? 'hi' : 'en';
+  if (input === 'hi') return 'hi';
+  if (input === 'kn') return 'kn';
+  return 'en';
 }
 
 const FIELD_QUESTIONS: Record<Lang, Record<keyof CitizenProfile, string>> = {
@@ -29,6 +31,17 @@ const FIELD_QUESTIONS: Record<Lang, Record<keyof CitizenProfile, string>> = {
     category: 'आवेदक किस सामाजिक श्रेणी से है?',
     disabilityStatus: 'क्या आवेदक को कोई शारीरिक विकलांगता है?',
   },
+  kn: {
+    name: 'ದಯವಿಟ್ಟು ನಾಗರಿಕರ ಹೆಸರನ್ನು ತಿಳಿಸಿ?',
+    age: 'ಅರ್ಜಿದಾರರ ವಯಸ್ಸು ಎಷ್ಟು?',
+    gender: 'ಅರ್ಜಿದಾರರ ಲಿಂಗ ಯಾವುದು?',
+    state: 'ಅರ್ಜಿದಾರರು ಯಾವ ರಾಜ್ಯದವರು?',
+    income: 'ಅರ್ಜಿದಾರರ ಕುಟುಂಬದ ವಾರ್ಷಿಕ ಆದಾಯ ಎಷ್ಟು (₹ ನಲ್ಲಿ)?',
+    occupation: 'ಅರ್ಜಿದಾರರ ಉದ್ಯೋಗ ಏನು? (ಉದಾ: ರೈತ, ವಿದ್ಯಾರ್ಥಿ, ನಿರ್ಮಾಣ ಕಾರ್ಮಿಕ)',
+    maritalStatus: 'ಅರ್ಜಿದಾರರ ವೈವಾಹಿಕ ಸ್ಥಿತಿ ಏನು?',
+    category: 'ಅರ್ಜಿದಾರರು ಯಾವ ಸಾಮಾಜಿಕ ವರ್ಗಕ್ಕೆ ಸೇರಿದವರು?',
+    disabilityStatus: 'ಅರ್ಜಿದಾರರಿಗೆ ಯಾವುದೇ ದೈಹಿಕ ಅಂಗವೈಕಲ್ಯವಿದೆಯೇ?',
+  },
 };
 
 // Display labels for the canonical option values (buttons/dropdown).
@@ -45,6 +58,12 @@ const OPTION_LABELS: Record<Lang, Record<string, string>> = {
     Single: 'अविवाहित', Married: 'विवाहित', Widowed: 'विधवा/विधुर', Divorced: 'तलाकशुदा',
     General: 'सामान्य', OBC: 'ओबीसी', SC: 'अनुसूचित जाति (SC)', ST: 'अनुसूचित जनजाति (ST)',
     Yes: 'हाँ', No: 'नहीं',
+  },
+  kn: {
+    Male: 'ಪುರುಷ', Female: 'ಮಹಿಳೆ', Other: 'ಇತರೆ',
+    Single: 'ಅವಿವಾಹಿತ', Married: 'ವಿವಾಹಿತ', Widowed: 'ವಿಧವೆ/ವಿಧುರ', Divorced: 'ವಿಚ್ಛೇದಿತ',
+    General: 'ಸಾಮಾನ್ಯ', OBC: 'ಒಬಿಸಿ', SC: 'ಪರಿಶಿಷ್ಟ ಜಾತಿ (SC)', ST: 'ಪರಿಶಿಷ್ಟ ಪಂಗಡ (ST)',
+    Yes: 'ಹೌದು', No: 'ಇಲ್ಲ',
   },
 };
 
@@ -64,6 +83,14 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     noSchemesFound: 'आवेदक की प्रोफ़ाइल के आधार पर, हमारे डेटाबेस में कोई मेल खाती सरकारी योजना नहीं मिली।',
     applicationComplete: 'बहुत बढ़िया! मैंने **{scheme}** के लिए सभी आवेदन विवरण एकत्र कर लिए हैं और एक पेशेवर केसवर्क आवेदन सारांश तैयार किया है। आप इसे वर्कस्पेस पैनल में देख और प्रिंट कर सकते हैं।',
     welcome: 'नमस्ते! मैं सहायक AI हूँ, आपका केसवर्कर सहायक। आइए नागरिक की प्रोफ़ाइल समझना शुरू करें। आप स्वाभाविक रूप से बोल सकते हैं, या ऐसा कुछ लिख सकते हैं: "मैं राम हूँ, बिहार से एक किसान, विवाहित और ₹90,000 प्रति वर्ष कमाता हूँ।"',
+  },
+  kn: {
+    askMore: 'ದಯವಿಟ್ಟು ನಾಗರಿಕರ ಬಗ್ಗೆ ಹೆಚ್ಚಿನ ಮಾಹಿತಿ ನೀಡಿ?',
+    recsReady: 'ನಾನು ನಾಗರಿಕರ ಪ್ರೊಫೈಲ್ ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸಿದ್ಧಪಡಿಸಿದ್ದೇನೆ ಮತ್ತು ಅವರಿಗೆ ಅರ್ಹವಾದ ಪ್ರಮುಖ ಕಲ್ಯಾಣ ಯೋಜನೆಗಳನ್ನು ಗುರುತಿಸಿದ್ದೇನೆ. ನೀವು ಬಲಭಾಗದ ಪ್ಯಾನೆಲ್‌ನಲ್ಲಿ ಶಿಫಾರಸುಗಳು ಮತ್ತು ವರದಿಯನ್ನು ಪರಿಶೀಲಿಸಬಹುದು.',
+    recsError: 'ನಾನು ಪ್ರೊಫೈಲ್ ವಿವರಗಳನ್ನು ಸಂಗ್ರಹಿಸಿದ್ದೇನೆ, ಆದರೆ ಶಿಫಾರಸುಗಳನ್ನು ರಚಿಸುವಾಗ ದೋಷ ಎದುರಾಯಿತು. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವೆಕ್ಟರ್ ಡೇಟಾಬೇಸ್ ಮತ್ತು ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ.',
+    noSchemesFound: 'ಅರ್ಜಿದಾರರ ಪ್ರೊಫೈಲ್ ಆಧಾರದ ಮೇಲೆ, ನಮ್ಮ ಡೇಟಾಬೇಸ್‌ನಲ್ಲಿ ಯಾವುದೇ ಹೊಂದಾಣಿಕೆಯ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.',
+    applicationComplete: 'ಅದ್ಭುತ! ನಾನು **{scheme}** ಗಾಗಿ ಎಲ್ಲಾ ಅರ್ಜಿ ವಿವರಗಳನ್ನು ಸಂಗ್ರಹಿಸಿ ವೃತ್ತಿಪರ ಕೇಸ್‌ವರ್ಕ್ ಅರ್ಜಿ ಸಾರಾಂಶ ವರದಿಯನ್ನು ಸಿದ್ಧಪಡಿಸಿದ್ದೇನೆ. ನೀವು ಇದನ್ನು ವರ್ಕ್‌ಸ್ಪೇಸ್ ಪ್ಯಾನೆಲ್‌ನಲ್ಲಿ ಪರಿಶೀಲಿಸಿ ಮುದ್ರಿಸಬಹುದು.',
+    welcome: 'ನಮಸ್ಕಾರ! ನಾನು ಸಹಾಯಕ್ AI, ನಿಮ್ಮ ಕೇಸ್‌ವರ್ಕರ್ ಸಹಾಯಕ. ನಾಗರಿಕರ ಪ್ರೊಫೈಲ್ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವ ಮೂಲಕ ಪ್ರಾರಂಭಿಸೋಣ. ನೀವು ಸ್ವಾಭಾವಿಕವಾಗಿ ಮಾತನಾಡಬಹುದು ಅಥವಾ ಹೀಗೆ ಬರೆಯಬಹುದು: "ನಾನು ರಾಮ್, ಬಿಹಾರದ ರೈತ, ವಿವಾಹಿತ ಮತ್ತು ವರ್ಷಕ್ಕೆ ₹90,000 ಗಳಿಸುತ್ತೇನೆ."',
   },
 };
 
@@ -87,4 +114,4 @@ export function botString(key: keyof typeof STRINGS.en, lang: Lang, vars?: Recor
   return str;
 }
 
-export const LANGUAGE_NAME: Record<Lang, string> = { en: 'English', hi: 'Hindi' };
+export const LANGUAGE_NAME: Record<Lang, string> = { en: 'English', hi: 'Hindi', kn: 'Kannada' };
