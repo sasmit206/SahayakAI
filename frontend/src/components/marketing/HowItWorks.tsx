@@ -18,7 +18,7 @@ export default function HowItWorks() {
           <div className="max-w-3xl">
             <span className="eyebrow">How it works</span>
             <h2 className="mt-4 font-display text-4xl lg:text-5xl text-white tracking-tightest font-semibold">
-              A five-step workflow, built around the caseworker.
+              A five-step workflow
             </h2>
             <p className="mt-5 text-ink-300 text-base leading-relaxed">
               From the first conversation to a completed application, Sahayak keeps the

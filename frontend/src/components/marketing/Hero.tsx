@@ -40,8 +40,16 @@ export default function Hero() {
           {...rise(0.08)}
           className="mt-7 font-display text-white text-[56px] sm:text-[72px] lg:text-[96px] leading-[0.95] tracking-tightest font-semibold max-w-5xl"
         >
-          Sahayak AI
+          Sahayak AI 
         </motion.h1>
+        <motion.h1
+          {...rise(0.08)}
+          className="  mt-7 font-display text-xs text-[20px] sm:text-[48px] lg:text-[64px]"
+        >
+          your next subsidy is 9 steps away.
+        </motion.h1>
+
+        
 
         <motion.p
           {...rise(0.18)}
