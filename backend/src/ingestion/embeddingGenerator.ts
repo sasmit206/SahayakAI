@@ -4,6 +4,7 @@ let pipelinePromise: any = null;
 
 async function getPipeline() {
   if (!pipelinePromise) {
+    console.log(`[EmbeddingGenerator] Loading embedding model: ${config.EMBEDDING_MODEL}`);
     try {
       // Use dynamic import to handle ES module load in Node/CommonJS
       const { pipeline } = await eval('import("@xenova/transformers")');

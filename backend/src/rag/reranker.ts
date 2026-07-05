@@ -8,6 +8,7 @@ async function getReranker() {
     throw new Error('Reranking model is disabled (configured as "none")');
   }
   if (!rerankerPromise) {
+    console.log(`[Reranker] Loading reranking model: ${config.RERANKER_MODEL}`);
     try {
       const { pipeline } = await eval('import("@xenova/transformers")');
       rerankerPromise = pipeline('text-classification', config.RERANKER_MODEL);
