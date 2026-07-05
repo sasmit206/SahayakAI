@@ -7,8 +7,9 @@ import { extractTextFromPdf } from '../ingestion/pdfLoader';
 import { extractSchemeFields } from '../ingestion/pdfFieldExtractor';
 import { normalizeRow } from '../ingestion/normalizer';
 import { appendSchemeToCsv } from '../ingestion/csvAppender';
-import { addSchemesToChroma } from '../ingestion/chromaUploader';
+import { addSchemesToChroma, uploadToChroma } from '../ingestion/chromaUploader';
 import { addSchemesToMemory, getAllSchemes } from '../services/dbService';
+import { loadSchemes } from '../ingestion/csvLoader';
 
 export const adminRouter = Router();
 
@@ -76,6 +77,41 @@ adminRouter.post('/upload-pdf', upload.single('pdf'), async (req: Request, res: 
   } catch (err: any) {
     console.error('[adminRouter] PDF processing failed:', err);
     return res.status(500).json({ error: 'Failed to process PDF', details: err?.message });
+  }
+});
+
+/**
+ * POST /api/admin/ingest
+ *
+ * Exposes ingestion as an HTTP POST endpoint so it can be triggered on 
+ * platforms like Render Free Tier where SSH shell access is disabled.
+ */
+adminRouter.post('/ingest', async (req: Request, res: Response) => {
+  const limitStr = req.query.limit || req.body.limit;
+  let limit = limitStr ? parseInt(limitStr as string, 10) : -1;
+
+  try {
+    console.log('[adminRouter] Starting triggered CSV ingestion...');
+    const allSchemes = await loadSchemes(config.CSV_PATH);
+    
+    let schemesToIngest = allSchemes;
+    if (limit > 0 && limit < allSchemes.length) {
+      console.log(`[adminRouter] Limiting ingestion to first ${limit} schemes.`);
+      schemesToIngest = allSchemes.slice(0, limit);
+    } else {
+      console.log(`[adminRouter] Ingesting all ${allSchemes.length} schemes.`);
+    }
+
+    await uploadToChroma(schemesToIngest);
+    console.log('[adminRouter] Triggered CSV ingestion completed successfully.');
+    
+    return res.json({
+      success: true,
+      message: `Successfully ingested ${schemesToIngest.length} schemes into ChromaDB.`
+    });
+  } catch (err: any) {
+    console.error('[adminRouter] Triggered CSV Ingestion failed:', err);
+    return res.status(500).json({ error: 'Ingestion failed', details: err?.message });
   }
 });
 
