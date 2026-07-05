@@ -4,6 +4,9 @@ import { SchemeDocument } from '../ingestion/normalizer';
 let rerankerPromise: any = null;
 
 async function getReranker() {
+  if (config.RERANKER_MODEL === 'none' || !config.RERANKER_MODEL) {
+    throw new Error('Reranking model is disabled (configured as "none")');
+  }
   if (!rerankerPromise) {
     try {
       const { pipeline } = await eval('import("@xenova/transformers")');
