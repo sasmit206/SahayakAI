@@ -5,9 +5,10 @@
  * - Phone validation (10 digits, numbers only)
  * - Uses ValidatedInput for special fields; plain input for others
  * - Smooth Framer Motion page transitions per question
+ * - Print button generates a professional A4 government-style printout
  */
-import React, { useState, useEffect } from 'react';
-import { FormField } from '../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { FormField, CitizenProfile, SchemeRecommendation } from '../services/api';
 import {
   ArrowLeft, ClipboardCheck, ArrowRight, Printer,
   AlertTriangle, HelpCircle, CheckCircle2, Loader2,
@@ -15,15 +16,19 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../context/LanguageContext';
 import { ValidatedInput } from './ValidatedInput';
+import { openAndPrint } from '../utils/printReport';
 
 interface ApplicationFlowPanelProps {
   schemeName: string;
+  schemeDetail: SchemeRecommendation | null;
   nextQuestion: FormField | null;
   applicationAnswers: Record<string, any>;
+  formFieldLabels: Record<string, string>;
   summaryReport: string | null;
   onAnswerSubmit: (val: any) => void;
   onBackToChat: () => void;
   isLoading: boolean;
+  profile: CitizenProfile;
 }
 
 /** Detect which validation variant a field key requires */
@@ -35,14 +40,14 @@ function getVariant(key: string): 'aadhaar' | 'phone' | 'text' | 'number' {
 }
 
 export const ApplicationFlowPanel: React.FC<ApplicationFlowPanelProps> = ({
-  schemeName, nextQuestion, applicationAnswers, summaryReport,
-  onAnswerSubmit, onBackToChat, isLoading,
+  schemeName, schemeDetail, nextQuestion, applicationAnswers, formFieldLabels,
+  summaryReport, onAnswerSubmit, onBackToChat, isLoading, profile,
 }) => {
   const { t } = useLang();
   const [currentValue, setCurrentValue] = useState<any>('');
   const [errorMessage, setErrorMessage] = useState('');
-  // Track whether the current special field (aadhaar/phone) is valid
   const [specialFieldValid, setSpecialFieldValid] = useState(false);
+  const appIdRef = useRef(`APP-${Date.now().toString(36).toUpperCase()}`);
 
   // Reset state when question changes
   useEffect(() => {
@@ -112,7 +117,19 @@ export const ApplicationFlowPanel: React.FC<ApplicationFlowPanelProps> = ({
         </div>
         {summaryReport && (
           <motion.button
-            onClick={() => window.print()}
+            onClick={() => openAndPrint({
+              profile,
+              schemeName,
+              schemeDetail,
+              applicationAnswers,
+              formFieldLabels,
+              summaryReport,
+              applicationId: appIdRef.current,
+              generatedDate: new Date().toLocaleString('en-IN', {
+                day: '2-digit', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              }),
+            })}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             className="btn-secondary text-[12.5px] px-3 py-1.5"
@@ -294,7 +311,7 @@ export const ApplicationFlowPanel: React.FC<ApplicationFlowPanelProps> = ({
                     key={k}
                     className="flex items-center justify-between gap-4 px-3 py-2 rounded-md hover:bg-white/[0.03]"
                   >
-                    <span className="text-[12.5px] font-mono text-ink-400">{k}</span>
+                    <span className="text-[12.5px] font-mono text-ink-400">{formFieldLabels[k] ?? k}</span>
                     <span className="text-[13px] text-white flex items-center gap-2">
                       {String(v)}
                       <CheckCircle2 className="h-3.5 w-3.5 text-success" strokeWidth={1.8} />

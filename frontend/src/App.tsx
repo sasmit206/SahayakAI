@@ -31,10 +31,11 @@ export const App: React.FC = () => {
   const [recommendations, setRecommendations] = useState<SchemeRecommendation[]>([]);
   const [report, setReport] = useState<string | null>(null);
 
-  const [, setSelectedSchemeId] = useState<string | null>(null);
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string | null>(null);
   const [selectedSchemeName, setSelectedSchemeName] = useState<string | null>(null);
   const [nextQuestion, setNextQuestion] = useState<FormField | null>(null);
   const [applicationAnswers, setApplicationAnswers] = useState<Record<string, any>>({});
+  const [formFieldLabels, setFormFieldLabels] = useState<Record<string, string>>({});
   const [summaryReport, setSummaryReport] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -123,7 +124,7 @@ export const App: React.FC = () => {
       setActiveMode('chat');
       setMissingFields([]); setNextField((data as any).nextField || null); setRecommendations([]); setReport(null);
       setSelectedSchemeId(null); setSelectedSchemeName(null);
-      setNextQuestion(null); setApplicationAnswers({}); setSummaryReport(null);
+      setNextQuestion(null); setApplicationAnswers({}); setFormFieldLabels({}); setSummaryReport(null);
     } catch (error) {
       console.error('Failed to reset session:', error);
       setMessages(prev => [...prev, {
@@ -142,6 +143,7 @@ export const App: React.FC = () => {
       const data = await sahayakApi.selectScheme(sessionId, schemeId, schemeName);
       setActiveMode(data.activeMode);
       setSelectedSchemeId(data.selectedSchemeId);
+      setFormFieldLabels({});
       setSelectedSchemeName(data.selectedSchemeName);
       setNextQuestion(data.nextQuestion);
       setApplicationAnswers(data.applicationAnswers || {});
@@ -160,6 +162,10 @@ export const App: React.FC = () => {
 
   const handleAnswerSubmit = async (val: any) => {
     setIsLoading(true);
+    // Capture the human-readable label for this field before advancing
+    if (nextQuestion) {
+      setFormFieldLabels(prev => ({ ...prev, [nextQuestion.key]: nextQuestion.label }));
+    }
     try {
       const data = await sahayakApi.submitAnswer(sessionId, val);
       setActiveMode(data.activeMode);
@@ -286,12 +292,15 @@ export const App: React.FC = () => {
           ) : (
             <ApplicationFlowPanel
               schemeName={selectedSchemeName || 'Welfare Scheme Application'}
+              schemeDetail={recommendations.find(r => r.schemeId === selectedSchemeId) ?? null}
               nextQuestion={nextQuestion}
               applicationAnswers={applicationAnswers}
+              formFieldLabels={formFieldLabels}
               summaryReport={summaryReport}
               onAnswerSubmit={handleAnswerSubmit}
               onBackToChat={handleBackToChat}
               isLoading={isLoading}
+              profile={profile}
             />
           )}
         </div>
